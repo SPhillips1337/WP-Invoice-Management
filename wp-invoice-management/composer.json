@@ -1,0 +1,14 @@
+{
+  "name": "your-vendor/wp-invoice-management",
+  "description": "Multi user invoicing plugin for WordPress.",
+  "type": "wordpress-plugin",
+  "require": {
+    "php": ">=7.4",
+    "dompdf/dompdf": "^2.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "WpInvoiceManagement\\\\": "src/"
+    }
+  }
+}
