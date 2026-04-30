@@ -231,12 +231,28 @@ class Plugin {
     <div class="invoice-header">
         <div class="invoice-title">INVOICE</div>
         <div>
-            <?php if ( $logo_id ) : ?>
-                <div class="invoice-logo"><?php echo wp_get_attachment_image( $logo_id, 'medium' ); ?></div>
+            <?php if ( $logo_id ) : 
+                $logo_path = get_attached_file( $logo_id );
+                $logo_url  = wp_get_attachment_url( $logo_id );
+                $logo_src  = $logo_url;
+
+                // For PDF, try to use base64 to avoid path/URL resolution issues
+                if ( $is_pdf && $logo_path && file_exists( $logo_path ) ) {
+                    $type = pathinfo( $logo_path, PATHINFO_EXTENSION );
+                    $data = file_get_contents( $logo_path );
+                    $logo_src = 'data:image/' . $type . ';base64,' . base64_encode( $data );
+                }
+            ?>
+                <div class="invoice-logo"><img src="<?php echo $logo_src; ?>" style="max-width: 200px;"></div>
             <?php endif; ?>
-            <span class="status-badge status-<?php echo esc_attr( $status ?: 'open' ); ?>">
-                <?php echo esc_html( ucfirst( $status ?: 'Open' ) ); ?>
-            </span>
+            <?php 
+            // Only show status in PDF if it's not 'open' (Draft/Open is default and usually redundant on a printed invoice)
+            if ( ! $is_pdf || ( $status && ! in_array( $status, array( 'open', 'draft' ) ) ) ) : 
+            ?>
+                <span class="status-badge status-<?php echo esc_attr( $status ?: 'open' ); ?>">
+                    <?php echo esc_html( ucfirst( $status ?: 'Open' ) ); ?>
+                </span>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -244,7 +260,7 @@ class Plugin {
         <table>
             <tr>
                 <th>Invoice Number:</th>
-                <td>#<?php echo esc_html( $post->ID ); ?></td>
+                <td><?php echo esc_html( $post->post_title ); ?></td>
             </tr>
             <?php if ( $date ) : ?>
             <tr>
@@ -397,14 +413,14 @@ class Plugin {
             'wp-invoice-dashboard',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/dashboard.css',
             array(),
-            '0.1.0'
+            '0.3.0'
         );
 
         wp_register_script(
             'wp-invoice-dashboard',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/dashboard.js',
             array( 'jquery' ),
-            '0.1.0',
+            '0.3.0',
             true
         );
 
@@ -421,14 +437,14 @@ class Plugin {
             'wp-invoice-frontend',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/frontend.css',
             array(),
-            '0.1.0'
+            '0.3.0'
         );
 
         wp_enqueue_script(
             'wp-invoice-frontend',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/frontend.js',
             array( 'jquery' ),
-            '0.1.0',
+            '0.3.0',
             true
         );
 
@@ -450,14 +466,14 @@ class Plugin {
                 'wp-invoice-admin',
                 plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/admin.css',
                 array(),
-                '0.1.0'
+                '0.3.0'
             );
 
             wp_enqueue_script(
                 'wp-invoice-admin',
                 plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/admin.js',
                 array( 'jquery', 'underscore' ),
-                '0.1.0',
+                '0.3.0',
                 true
             );
         }
