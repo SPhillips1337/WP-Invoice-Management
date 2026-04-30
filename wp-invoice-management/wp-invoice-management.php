@@ -11,16 +11,25 @@
  * Domain Path: /languages
  */
 
-use WpInvoiceManagement\Plugin;
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+require_once __DIR__ . '/src/CPT/Invoice.php';
+require_once __DIR__ . '/src/CPT/Customer.php';
+require_once __DIR__ . '/src/API/REST_API.php';
+require_once __DIR__ . '/src/Plugin.php';
+
+use Wpim\Invoice\Plugin;
+
 function run_wp_invoice_management() {
     $plugin = Plugin::instance();
     $plugin->run();
 }
-run_wp_invoice_management();
+add_action( 'plugins_loaded', 'run_wp_invoice_management', 5 );
+
+add_action( 'admin_menu', function() {
+    error_log( 'WP Invoice: admin_menu fired, CPT should be registered' );
+} );

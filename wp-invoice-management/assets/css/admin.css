@@ -1,0 +1,12 @@
+/* WP Invoice Management Admin Styles */
+#invoice-items-table .amount {
+    background: #f0f0f1;
+}
+
+#invoice_status {
+    width: 100%;
+}
+
+.invoice-item-row td {
+    vertical-align: middle;
+}
