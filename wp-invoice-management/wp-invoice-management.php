@@ -3,7 +3,7 @@
  * Plugin Name: WP Invoice Management
  * Plugin URI:  https://example.com/wp-invoice-management
  * Description: Multi user invoicing functionality similar to invoice-generator.com
- * Version:     0.1.0
+ * Version:     0.2.0
  * Author:      Your Name
  * Author URI:  https://example.com
  * License:     GPLv2 or later
@@ -19,6 +19,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 require_once __DIR__ . '/src/CPT/Invoice.php';
 require_once __DIR__ . '/src/CPT/Customer.php';
+require_once __DIR__ . '/src/Lib/Importer.php';
+require_once __DIR__ . '/src/Admin/ImportPage.php';
 require_once __DIR__ . '/src/API/REST_API.php';
 require_once __DIR__ . '/src/Plugin.php';
 

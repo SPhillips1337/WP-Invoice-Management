@@ -53,6 +53,22 @@ class REST_API {
                 'permission_callback' => array( $this, 'check_permission' ),
             ),
         ) );
+ 
+        register_rest_route( 'wp-invoice/v1', '/import/upload', array(
+            array(
+                'methods'  => 'POST',
+                'callback' => array( $this, 'upload_import_file' ),
+                'permission_callback' => array( $this, 'check_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'wp-invoice/v1', '/import/process', array(
+            array(
+                'methods'  => 'POST',
+                'callback' => array( $this, 'process_import_batch' ),
+                'permission_callback' => array( $this, 'check_permission' ),
+            ),
+        ) );
     }
 
     public function check_permission() {
@@ -60,10 +76,20 @@ class REST_API {
     }
 
     public function get_invoices( $request ) {
+        $per_page = $request->get_param( 'per_page' ) ?: 10;
+        $page     = $request->get_param( 'page' ) ?: 1;
+        $search   = $request->get_param( 'search' );
+        $orderby  = $request->get_param( 'orderby' ) ?: 'date';
+        $order    = $request->get_param( 'order' ) ?: 'DESC';
+
         $args = array(
             'post_type'      => 'wp_invoice',
-            'posts_per_page' => -1,
-            'post_status'    => 'any',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'orderby'        => $orderby,
+            'order'          => $order,
+            's'              => $search,
+            'post_status'    => 'publish',
         );
 
         if ( ! current_user_can( 'manage_options' ) ) {
@@ -77,7 +103,11 @@ class REST_API {
             $invoices[] = $this->prepare_invoice( $post );
         }
 
-        return rest_ensure_response( $invoices );
+        return rest_ensure_response( array(
+            'items' => $invoices,
+            'total' => (int) $query->found_posts,
+            'pages' => $query->max_num_pages,
+        ) );
     }
 
     public function get_invoice( $request ) {
@@ -198,6 +228,67 @@ class REST_API {
         return rest_ensure_response( $customers );
     }
 
+    public function upload_import_file( $request ) {
+        $files = $request->get_file_params();
+        if ( empty( $files['file'] ) ) {
+            return new \WP_Error( 'no_file', 'No file uploaded', array( 'status' => 400 ) );
+        }
+
+        $importer = new \Wpim\Invoice\Lib\Importer();
+        $invoices = $importer->parse_to_array( $files['file']['tmp_name'] );
+
+        if ( is_wp_error( $invoices ) ) {
+            return $invoices;
+        }
+
+        $job_id = uniqid( 'import_' );
+        set_transient( $job_id, $invoices, HOUR_IN_SECONDS );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'job_id'  => $job_id,
+            'total'   => count( $invoices ),
+        ) );
+    }
+
+    public function process_import_batch( $request ) {
+        $job_id = $request->get_param( 'job_id' );
+        $offset = (int) $request->get_param( 'offset' );
+        $limit  = (int) $request->get_param( 'limit' ) ?: 5;
+
+        $invoices = get_transient( $job_id );
+        if ( ! $invoices ) {
+            return new \WP_Error( 'invalid_job', 'Import job not found or expired', array( 'status' => 404 ) );
+        }
+
+        $batch = array_slice( $invoices, $offset, $limit );
+        $importer = new \Wpim\Invoice\Lib\Importer();
+        $author_id = get_current_user_id();
+        $imported = array();
+
+        foreach ( $batch as $invoice_data ) {
+            $result = $importer->import_single_invoice( $invoice_data, $author_id );
+            if ( ! is_wp_error( $result ) ) {
+                $imported[] = $invoice_data['title'];
+            }
+        }
+
+        // If finished, delete transient
+        if ( $offset + $limit >= count( $invoices ) ) {
+            delete_transient( $job_id );
+        }
+
+        return rest_ensure_response( array(
+            'success'  => true,
+            'imported' => $imported,
+            'finished' => ( $offset + $limit >= count( $invoices ) ),
+        ) );
+    }
+
+    public function import_csv( $request ) {
+        // ... (can be deprecated or kept for simple imports)
+    }
+
     private function save_invoice_meta( $post_id, $data ) {
         $meta_fields = array(
             '_invoice_logo_id',
@@ -282,6 +373,8 @@ class REST_API {
             'total'        => floatval( get_post_meta( $post->ID, '_invoice_total', true ) ),
             'created_at'   => $post->post_date,
             'modified_at'  => $post->post_modified,
+            'view_url'     => add_query_arg( 'wp_invoice_pdf', $post->ID, home_url() ),
+            'edit_url'     => add_query_arg( array( 'invoice_editor' => 1, 'id' => $post->ID ), home_url() ),
         );
     }
 }

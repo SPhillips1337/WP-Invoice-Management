@@ -1,0 +1,301 @@
+/* WP Invoice Management Dashboard Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.wp-invoice-premium-ui {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1e293b;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding-bottom: 40px;
+}
+
+.wp-invoice-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.wp-invoice-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 32px 0;
+    margin-bottom: 32px;
+}
+
+.wp-invoice-header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wp-invoice-header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.wp-invoice-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.wp-invoice-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+
+.wp-invoice-btn .icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.wp-invoice-btn-primary {
+    background-color: #10b981;
+    color: white;
+}
+
+.wp-invoice-btn-primary:hover {
+    background-color: #059669;
+}
+
+.wp-invoice-btn-secondary {
+    background-color: white;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+
+.wp-invoice-btn-secondary:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.wp-invoice-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.wp-invoice-table-toolbar {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.wp-invoice-search {
+    position: relative;
+    max-width: 320px;
+    width: 100%;
+}
+
+.wp-invoice-search .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.wp-invoice-search input {
+    width: 100%;
+    padding: 10px 12px 10px 40px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.wp-invoice-search input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.wp-invoice-table-container {
+    overflow-x: auto;
+}
+
+#wp-invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#wp-invoice-table th {
+    background: #f8fafc;
+    padding: 12px 24px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+}
+
+#wp-invoice-table th:hover {
+    color: #0f172a;
+}
+
+#wp-invoice-table td {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+#wp-invoice-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+.wp-invoice-ref {
+    color: #10b981;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.wp-invoice-ref:hover {
+    text-decoration: underline;
+}
+
+.status-badge {
+    display: inline-flex;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-open { background: #eff6ff; color: #3b82f6; }
+.status-paid { background: #ecfdf5; color: #10b981; }
+.status-overdue { background: #fef2f2; color: #ef4444; }
+
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
+.py-8 { padding-top: 32px !important; padding-bottom: 32px !important; }
+
+.wp-invoice-pagination {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+}
+
+#wp-invoice-pagination-info {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.wp-invoice-pagination-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.wp-invoice-pagination-btns button {
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.wp-invoice-pagination-btns button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Modal / Overlay */
+.wp-invoice-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.wp-invoice-modal {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+}
+
+.wp-invoice-progress-bar {
+    height: 12px;
+    background: #f1f5f9;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+#wp-invoice-progress-fill {
+    height: 100%;
+    background: #10b981;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+#wp-invoice-import-log {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+    height: 150px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 11px;
+    margin-top: 16px;
+}
+
+/* Force Full Width for any theme using aggressive breakout */
+body.wp-invoice-force-full-width #wp-invoice-dashboard-app {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background-color: #f8fafc;
+}
+
+body.wp-invoice-force-full-width .wp-invoice-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* Hide theme specific elements if they interfere */
+body.wp-invoice-force-full-width h1:not(#wp-invoice-dashboard-app h1),
+body.wp-invoice-force-full-width .entry-title,
+body.wp-invoice-force-full-width .entry-header, 
+body.wp-invoice-force-full-width .post-navigation, 
+body.wp-invoice-force-full-width .comments-area {
+    display: none !important;
+}
+
+/* Hide theme specific elements if they interfere */
+body.wp-invoice-force-full-width .entry-header, 
+body.wp-invoice-force-full-width .post-navigation, 
+body.wp-invoice-force-full-width .comments-area {
+    display: none !important;
+}

@@ -14,12 +14,14 @@ class Plugin {
     public function run() {
         $this->init_cpts();
         $this->init_hooks();
+        flush_rewrite_rules();
     }
 
     private function init_cpts() {
         new CPT\Invoice();
         new CPT\Customer();
         new API\REST_API();
+        new Admin\ImportPage();
     }
 
     private function init_hooks() {
@@ -29,6 +31,10 @@ class Plugin {
         add_shortcode( 'invoice_dashboard', array( $this, 'render_invoice_dashboard' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+        
+        // Page Templates
+        add_filter( 'theme_templates', array( $this, 'register_page_templates' ), 10, 4 );
+        add_filter( 'template_include', array( $this, 'load_page_templates' ) );
     }
 
     public function handle_invoice_template() {
@@ -36,6 +42,11 @@ class Plugin {
 
         if ( is_singular( 'wp_invoice' ) ) {
             $this->render_invoice_template( $post );
+            exit;
+        }
+
+        if ( isset( $_GET['invoice_dashboard'] ) ) {
+            $this->render_full_dashboard();
             exit;
         }
 
@@ -72,11 +83,48 @@ class Plugin {
             return '<p>Please <a href="' . wp_login_url( get_permalink() ) . '">log in</a> to view invoices.</p>';
         }
 
-        $editor_url = add_query_arg( 'wp-invoice-editor', '1', get_permalink() );
-        
-        return '<div class="wp-invoice-dashboard">
-            <p><a href="' . esc_url( $editor_url ) . '" class="button button-primary">Create New Invoice</a></p>
-        </div>';
+        add_filter( 'body_class', function( $classes ) {
+            $classes[] = 'wp-invoice-force-full-width';
+            return $classes;
+        } );
+
+        wp_enqueue_style( 'wp-invoice-dashboard' );
+        wp_enqueue_script( 'wp-invoice-dashboard' );
+
+        ob_start();
+        include plugin_dir_path( __DIR__ ) . 'templates/invoice-dashboard.php';
+        return ob_get_clean();
+    }
+
+    public function render_full_dashboard() {
+        if ( ! is_user_logged_in() ) {
+            auth_redirect();
+        }
+
+        $template_path = dirname( dirname( __FILE__ ) ) . '/templates/dashboard-app.php';
+        if ( file_exists( $template_path ) ) {
+            include $template_path;
+        } else {
+            echo $this->render_invoice_dashboard();
+        }
+    }
+
+    public function register_page_templates( $templates, $theme, $post, $post_type ) {
+        $templates['templates/page-invoice-full-width.php'] = __( 'Invoice Full Width', 'wp-invoice-management' );
+        return $templates;
+    }
+
+    public function load_page_templates( $template ) {
+        if ( is_page() ) {
+            $template_slug = get_page_template_slug();
+            if ( 'templates/page-invoice-full-width.php' === $template_slug ) {
+                $file = plugin_dir_path( __DIR__ ) . 'templates/page-invoice-full-width.php';
+                if ( file_exists( $file ) ) {
+                    return $file;
+                }
+            }
+        }
+        return $template;
     }
 
     public function generate_pdf( $invoice_id ) {
@@ -333,9 +381,42 @@ class Plugin {
             'edit_posts',
             'post-new.php?post_type=wp_invoice'
         );
+
+        add_submenu_page(
+            'edit.php?post_type=wp_invoice',
+            __( 'Import Invoices', 'wp-invoice-management' ),
+            __( 'Import', 'wp-invoice-management' ),
+            'edit_posts',
+            'wp-invoice-import',
+            array( new Admin\ImportPage(), 'render' )
+        );
     }
 
     public function enqueue_frontend_scripts() {
+        wp_register_style(
+            'wp-invoice-dashboard',
+            plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/dashboard.css',
+            array(),
+            '0.1.0'
+        );
+
+        wp_register_script(
+            'wp-invoice-dashboard',
+            plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/dashboard.js',
+            array( 'jquery' ),
+            '0.1.0',
+            true
+        );
+
+        wp_localize_script(
+            'wp-invoice-dashboard',
+            'wpApiSettings',
+            array(
+                'root'  => esc_url_raw( rest_url() ),
+                'nonce' => wp_create_nonce( 'wp_rest' ),
+            )
+        );
+
         wp_enqueue_style(
             'wp-invoice-frontend',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/frontend.css',
@@ -349,6 +430,15 @@ class Plugin {
             array( 'jquery' ),
             '0.1.0',
             true
+        );
+
+        wp_localize_script(
+            'wp-invoice-frontend',
+            'wpApiSettings',
+            array(
+                'root'  => esc_url_raw( rest_url() ),
+                'nonce' => wp_create_nonce( 'wp_rest' ),
+            )
         );
     }
 

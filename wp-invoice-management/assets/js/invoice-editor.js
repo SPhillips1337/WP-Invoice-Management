@@ -31,6 +31,7 @@
         downloadPdfBtn: document.getElementById('downloadPdfBtn'),
         deleteInvoiceBtn: document.getElementById('deleteInvoiceBtn'),
         newInvoiceBtn: document.getElementById('newInvoiceBtn'),
+        invoiceNumber: document.getElementById('invoiceNumber'),
         confirmModal: document.getElementById('confirmModal'),
         cancelDelete: document.getElementById('cancelDelete'),
         confirmDelete: document.getElementById('confirmDelete')
@@ -57,8 +58,16 @@
 
     async function loadInvoices() {
         try {
-            invoices = await apiCall('/invoices');
+            const response = await apiCall('/invoices');
+            invoices = response.items || [];
             renderInvoiceList();
+
+            // Check if we have an ID in the URL to load
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (id && !currentInvoiceId) {
+                loadInvoice(parseInt(id));
+            }
         } catch (error) {
             console.error('Failed to load invoices:', error);
             elements.invoiceList.innerHTML = '<div class="loading">Failed to load invoices</div>';
@@ -73,7 +82,7 @@
 
         elements.invoiceList.innerHTML = invoices.map(inv => `
             <div class="invoice-item ${inv.id === currentInvoiceId ? 'active' : ''}" data-id="${inv.id}">
-                <div class="invoice-item-title">Invoice #${inv.id}</div>
+                <div class="invoice-item-title">${inv.title || 'Invoice #' + inv.id}</div>
                 <div class="invoice-item-meta">
                     <span class="status-badge ${inv.status || 'draft'}">${inv.status || 'draft'}</span>
                     <span class="invoice-item-amount">$${(inv.total || 0).toFixed(2)}</span>
@@ -101,6 +110,7 @@
 
     function populateEditor(invoice) {
         elements.invoiceId.textContent = invoice.id;
+        elements.invoiceNumber.value = invoice.title || '';
         elements.invoiceStatus.value = invoice.status || 'draft';
         elements.logoId.value = invoice.logo_id || '';
         
@@ -202,7 +212,7 @@
         });
 
         return {
-            title: `Invoice #${elements.invoiceId.textContent}`,
+            title: elements.invoiceNumber.value.trim() || `Invoice #${elements.invoiceId.textContent}`,
             status: elements.invoiceStatus.value,
             logo_id: elements.logoId.value,
             from: elements.fromAddress.value,
@@ -262,6 +272,7 @@
         showEditor();
         
         elements.invoiceId.textContent = 'New';
+        elements.invoiceNumber.value = '';
         elements.invoiceStatus.value = 'draft';
         elements.logoId.value = '';
         elements.logoPreview.innerHTML = `

@@ -84,6 +84,10 @@
                             </div>
                             <div class="invoice-meta">
                                 <div class="meta-row">
+                                    <label>Invoice Number</label>
+                                    <input type="text" id="invoiceNumber" placeholder="#MW003">
+                                </div>
+                                <div class="meta-row">
                                     <label>Invoice Date</label>
                                     <input type="date" id="invoiceDate">
                                 </div>
