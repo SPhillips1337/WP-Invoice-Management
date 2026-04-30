@@ -53,7 +53,7 @@ class ImportPage {
                 log('Uploading file...');
 
                 $.ajax({
-                    url: '/wp-json/wp-invoice/v1/import/upload',
+                    url: '<?php echo esc_url_raw( rest_url( "wp-invoice/v1/import/upload" ) ); ?>',
                     method: 'POST',
                     data: formData,
                     processData: false,
@@ -75,7 +75,7 @@ class ImportPage {
 
             function processBatch() {
                 $.ajax({
-                    url: '/wp-json/wp-invoice/v1/import/process',
+                    url: '<?php echo esc_url_raw( rest_url( "wp-invoice/v1/import/process" ) ); ?>',
                     method: 'POST',
                     data: {
                         job_id: job_id,

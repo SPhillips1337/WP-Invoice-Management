@@ -148,7 +148,16 @@
                     processBatch(response.job_id, 0, response.total);
                 },
                 error: function(xhr) {
-                    log('Upload failed: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'), 'error');
+                    var errorMsg = 'Unknown error';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        // Extract title from HTML if it's a WP error page
+                        var match = xhr.responseText.match(/<title>(.*)<\/title>/);
+                        errorMsg = match ? match[1] : 'Server Error (check console)';
+                        console.error('Full Error Response:', xhr.responseText);
+                    }
+                    log('Upload failed: ' + errorMsg, 'error');
                 }
             });
         });

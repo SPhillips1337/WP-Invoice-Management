@@ -234,21 +234,38 @@ class REST_API {
             return new \WP_Error( 'no_file', 'No file uploaded', array( 'status' => 400 ) );
         }
 
-        $importer = new \Wpim\Invoice\Lib\Importer();
-        $invoices = $importer->parse_to_array( $files['file']['tmp_name'] );
+        try {
+            $tmp_file = $files['file']['tmp_name'];
+            if ( ! file_exists( $tmp_file ) || ! is_readable( $tmp_file ) ) {
+                error_log( 'Import Upload Error: Temp file not found or not readable at ' . $tmp_file );
+                return new \WP_Error( 'file_error', 'Temporary file not accessible on server', array( 'status' => 500 ) );
+            }
 
-        if ( is_wp_error( $invoices ) ) {
-            return $invoices;
+            $importer = new \Wpim\Invoice\Lib\Importer();
+            $invoices = $importer->parse_to_array( $tmp_file );
+
+            if ( is_wp_error( $invoices ) ) {
+                error_log( 'Import Parse Error: ' . $invoices->get_error_message() );
+                return $invoices;
+            }
+
+            if ( empty( $invoices ) ) {
+                return new \WP_Error( 'empty_import', 'No valid invoices found in CSV', array( 'status' => 400 ) );
+            }
+
+            $job_id = uniqid( 'import_' );
+            // Store invoices in transient for batch processing
+            set_transient( $job_id, $invoices, HOUR_IN_SECONDS );
+
+            return rest_ensure_response( array(
+                'success' => true,
+                'job_id'  => $job_id,
+                'total'   => count( $invoices ),
+            ) );
+        } catch ( \Exception $e ) {
+            error_log( 'Import Exception: ' . $e->getMessage() );
+            return new \WP_Error( 'import_failed', 'Internal server error during upload: ' . $e->getMessage(), array( 'status' => 500 ) );
         }
-
-        $job_id = uniqid( 'import_' );
-        set_transient( $job_id, $invoices, HOUR_IN_SECONDS );
-
-        return rest_ensure_response( array(
-            'success' => true,
-            'job_id'  => $job_id,
-            'total'   => count( $invoices ),
-        ) );
     }
 
     public function process_import_batch( $request ) {
@@ -291,26 +308,36 @@ class REST_API {
 
     private function save_invoice_meta( $post_id, $data ) {
         $meta_fields = array(
-            '_invoice_logo_id',
-            '_invoice_from',
-            '_invoice_to',
-            '_invoice_ship_to',
-            '_invoice_date',
-            '_invoice_due_date',
-            '_invoice_po_number',
-            '_invoice_notes',
-            '_invoice_terms',
-            '_invoice_tax',
-            '_invoice_discount',
-            '_invoice_shipping',
-            '_invoice_amount_paid',
-            '_invoice_status',
+            '_invoice_logo_id'     => 'logo_id',
+            '_invoice_from'        => 'from',
+            '_invoice_to'          => 'to',
+            '_invoice_ship_to'     => 'ship_to',
+            '_invoice_date'        => 'date',
+            '_invoice_due_date'    => 'due_date',
+            '_invoice_po_number'   => 'po_number',
+            '_invoice_notes'       => 'notes',
+            '_invoice_terms'       => 'terms',
+            '_invoice_tax'         => 'tax',
+            '_invoice_discount'    => 'discount',
+            '_invoice_shipping'    => 'shipping',
+            '_invoice_amount_paid' => 'amount_paid',
+            '_invoice_status'      => 'status',
         );
 
-        foreach ( $meta_fields as $field ) {
-            $key = str_replace( '_invoice_', 'invoice_', $field );
-            if ( isset( $data[ $key ] ) ) {
-                update_post_meta( $post_id, $field, sanitize_text_field( $data[ $key ] ) );
+        foreach ( $meta_fields as $meta_key => $data_key ) {
+            if ( isset( $data[ $data_key ] ) ) {
+                $value = $data[ $data_key ];
+                
+                // Use appropriate sanitization based on field type
+                if ( in_array( $data_key, array( 'from', 'to', 'ship_to', 'notes', 'terms' ) ) ) {
+                    $value = sanitize_textarea_field( $value );
+                } elseif ( in_array( $data_key, array( 'tax', 'discount', 'shipping', 'amount_paid' ) ) ) {
+                    $value = floatval( $value );
+                } else {
+                    $value = sanitize_text_field( $value );
+                }
+
+                update_post_meta( $post_id, $meta_key, $value );
             }
         }
 

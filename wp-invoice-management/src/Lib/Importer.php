@@ -49,7 +49,7 @@ class Importer {
         }
 
         $header = fgetcsv( $handle );
-        if ( ! $header ) {
+        if ( ! $header || ! is_array( $header ) ) {
             fclose( $handle );
             return new \WP_Error( 'invalid_csv', 'Invalid or empty CSV header' );
         }
@@ -57,7 +57,7 @@ class Importer {
         $invoices = array();
 
         while ( ( $row = fgetcsv( $handle ) ) !== false ) {
-            if ( count( $row ) < count( $header ) ) {
+            if ( count( $row ) !== count( $header ) ) {
                 continue;
             }
 
@@ -69,22 +69,24 @@ class Importer {
             if ( ! isset( $invoices[ $key ] ) ) {
                 $invoices[ $key ] = array(
                     'title'               => 'Invoice #' . $invoice_number,
-                    'invoice_to'          => $customer,
-                    'invoice_date'        => $data['date'],
-                    'invoice_due_date'    => $data['due_date'],
-                    'invoice_po_number'   => $data['purchase_order'],
-                    'invoice_notes'       => $data['notes'],
-                    'invoice_terms'       => $data['terms'],
-                    'invoice_discount'    => floatval( $data['discount'] ),
-                    'invoice_tax'         => floatval( $data['tax'] ),
-                    'invoice_shipping'    => floatval( $data['shipping'] ),
-                    'invoice_amount_paid' => floatval( $data['amount_paid'] ),
+                    'from'                => '', // Missing from CSV, will need manual update or setting
+                    'to'                  => $customer,
+                    'date'                => $this->format_date( $data['date'] ),
+                    'due_date'            => $this->format_date( $data['due_date'] ),
+                    'po_number'           => $data['purchase_order'],
+                    'notes'               => $data['notes'],
+                    'terms'               => $data['terms'],
+                    'discount'            => floatval( $data['discount'] ),
+                    'tax'                 => floatval( $data['tax'] ),
+                    'shipping'            => floatval( $data['shipping'] ),
+                    'amount_paid'         => floatval( $data['amount_paid'] ),
                     'items'               => array(),
                 );
             }
 
+            $description = ! empty( $data['description'] ) ? $data['description'] : $data['item'];
             $invoices[ $key ]['items'][] = array(
-                'description' => $data['item'],
+                'description' => $description,
                 'quantity'    => floatval( $data['quantity'] ),
                 'rate'        => floatval( $data['unit_cost'] ),
             );
@@ -135,43 +137,63 @@ class Importer {
     }
 
     /**
+     * Format date to YYYY-MM-DD for HTML inputs.
+     *
+     * @param string $date_string
+     * @return string
+     */
+    private function format_date( $date_string ) {
+        if ( empty( $date_string ) ) {
+            return '';
+        }
+        $timestamp = strtotime( $date_string );
+        return $timestamp ? date( 'Y-m-d', $timestamp ) : '';
+    }
+
+    /**
      * Save metadata for an imported invoice.
      *
      * @param int $post_id
      * @param array $data
      */
     private function save_invoice_meta( $post_id, $data ) {
+        // Reuse the logic from REST_API if possible, or duplicate for now
+        // Mapping as per the new REST_API structure
         $meta_fields = array(
-            '_invoice_to',
-            '_invoice_date',
-            '_invoice_due_date',
-            '_invoice_po_number',
-            '_invoice_notes',
-            '_invoice_terms',
-            '_invoice_tax',
-            '_invoice_discount',
-            '_invoice_shipping',
-            '_invoice_amount_paid',
+            '_invoice_from'        => 'from',
+            '_invoice_to'          => 'to',
+            '_invoice_date'        => 'date',
+            '_invoice_due_date'    => 'due_date',
+            '_invoice_po_number'   => 'po_number',
+            '_invoice_notes'       => 'notes',
+            '_invoice_terms'       => 'terms',
+            '_invoice_tax'         => 'tax',
+            '_invoice_discount'    => 'discount',
+            '_invoice_shipping'    => 'shipping',
+            '_invoice_amount_paid' => 'amount_paid',
         );
 
-        foreach ( $meta_fields as $field ) {
-            $key = str_replace( '_invoice_', 'invoice_', $field );
-            if ( isset( $data[ $key ] ) ) {
-                update_post_meta( $post_id, $field, sanitize_text_field( $data[ $key ] ) );
+        foreach ( $meta_fields as $meta_key => $data_key ) {
+            if ( isset( $data[ $data_key ] ) ) {
+                $value = $data[ $data_key ];
+                if ( in_array( $data_key, array( 'from', 'to', 'notes', 'terms' ) ) ) {
+                    $value = sanitize_textarea_field( $value );
+                } else {
+                    $value = sanitize_text_field( $value );
+                }
+                update_post_meta( $post_id, $meta_key, $value );
             }
         }
 
         if ( isset( $data['items'] ) && is_array( $data['items'] ) ) {
             $items = array();
             foreach ( $data['items'] as $item ) {
-                if ( ! empty( $item['description'] ) ) {
-                    $items[] = array(
-                        'description' => sanitize_textarea_field( $item['description'] ),
-                        'quantity'    => floatval( $item['quantity'] ),
-                        'rate'        => floatval( $item['rate'] ),
-                        'amount'      => floatval( $item['quantity'] ) * floatval( $item['rate'] ),
-                    );
-                }
+                $items[] = array(
+                    'description' => sanitize_textarea_field( $item['description'] ),
+                    'quantity'    => floatval( $item['quantity'] ),
+                    'rate'        => floatval( $item['rate'] ),
+                    'amount'      => floatval( $item['quantity'] ) * floatval( $item['rate'] ),
+                );
             }
             update_post_meta( $post_id, '_invoice_items', $items );
 
@@ -180,9 +202,9 @@ class Importer {
                 $subtotal += floatval( $item['amount'] );
             }
 
-            $tax      = floatval( get_post_meta( $post_id, '_invoice_tax', true ) );
-            $discount = floatval( get_post_meta( $post_id, '_invoice_discount', true ) );
-            $shipping = floatval( get_post_meta( $post_id, '_invoice_shipping', true ) );
+            $tax      = isset( $data['tax'] ) ? floatval( $data['tax'] ) : 0;
+            $discount = isset( $data['discount'] ) ? floatval( $data['discount'] ) : 0;
+            $shipping = isset( $data['shipping'] ) ? floatval( $data['shipping'] ) : 0;
             $total    = $subtotal + $tax - $discount + $shipping;
 
             update_post_meta( $post_id, '_invoice_subtotal', $subtotal );
