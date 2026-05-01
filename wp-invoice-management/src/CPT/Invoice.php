@@ -162,10 +162,11 @@ class Invoice {
             <table class="widefat" id="invoice-items-table">
                 <thead>
                     <tr>
+                        <th style="width: 130px;"><?php _e( 'Date', 'wp-invoice-management' ); ?></th>
                         <th><?php _e( 'Description', 'wp-invoice-management' ); ?></th>
-                        <th style="width: 100px;"><?php _e( 'Quantity', 'wp-invoice-management' ); ?></th>
-                        <th style="width: 120px;"><?php _e( 'Rate', 'wp-invoice-management' ); ?></th>
-                        <th style="width: 120px;"><?php _e( 'Amount', 'wp-invoice-management' ); ?></th>
+                        <th style="width: 80px;"><?php _e( 'Quantity', 'wp-invoice-management' ); ?></th>
+                        <th style="width: 100px;"><?php _e( 'Rate', 'wp-invoice-management' ); ?></th>
+                        <th style="width: 100px;"><?php _e( 'Amount', 'wp-invoice-management' ); ?></th>
                         <th style="width: 50px;"></th>
                     </tr>
                 </thead>
@@ -173,23 +174,33 @@ class Invoice {
                     <?php
                     if ( ! empty( $items ) ) :
                         foreach ( $items as $index => $item ) :
+                            $is_section = isset( $item['type'] ) && $item['type'] === 'section';
                             ?>
-                            <tr class="invoice-item-row">
-                                <td><input type="text" name="invoice_items[<?php echo $index; ?>][description]" value="<?php echo esc_attr( $item['description'] ?? '' ); ?>" class="large-text" /></td>
-                                <td><input type="number" name="invoice_items[<?php echo $index; ?>][quantity]" value="<?php echo esc_attr( $item['quantity'] ?? 1 ); ?>" class="quantity" min="0" step="0.01" /></td>
-                                <td><input type="number" name="invoice_items[<?php echo $index; ?>][rate]" value="<?php echo esc_attr( $item['rate'] ?? 0 ); ?>" class="rate" min="0" step="0.01" /></td>
-                                <td><input type="number" name="invoice_items[<?php echo $index; ?>][amount]" value="<?php echo esc_attr( $item['amount'] ?? 0 ); ?>" class="amount" readonly /></td>
+                            <tr class="<?php echo $is_section ? 'invoice-section-row' : 'invoice-item-row'; ?>" data-index="<?php echo $index; ?>">
+                                <?php if ( $is_section ) : ?>
+                                    <td colspan="5">
+                                        <input type="hidden" name="invoice_items[<?php echo $index; ?>][type]" value="section" />
+                                        <input type="text" name="invoice_items[<?php echo $index; ?>][description]" value="<?php echo esc_attr( $item['description'] ?? '' ); ?>" class="large-text project-header-input" placeholder="Project / Section Header" style="font-weight: bold; background: #f0f6fb;" />
+                                    </td>
+                                <?php else : ?>
+                                    <td><input type="date" name="invoice_items[<?php echo $index; ?>][date]" value="<?php echo esc_attr( $item['date'] ?? '' ); ?>" style="width: 100%;" /></td>
+                                    <td><input type="text" name="invoice_items[<?php echo $index; ?>][description]" value="<?php echo esc_attr( $item['description'] ?? '' ); ?>" class="large-text" /></td>
+                                    <td><input type="number" name="invoice_items[<?php echo $index; ?>][quantity]" value="<?php echo esc_attr( $item['quantity'] ?? 1 ); ?>" class="quantity" min="0" step="0.01" style="width: 100%;" /></td>
+                                    <td><input type="number" name="invoice_items[<?php echo $index; ?>][rate]" value="<?php echo esc_attr( $item['rate'] ?? 0 ); ?>" class="rate" min="0" step="0.01" style="width: 100%;" /></td>
+                                    <td><input type="number" name="invoice_items[<?php echo $index; ?>][amount]" value="<?php echo esc_attr( $item['amount'] ?? 0 ); ?>" class="amount" readonly style="width: 100%;" /></td>
+                                <?php endif; ?>
                                 <td><button type="button" class="button remove-item">X</button></td>
                             </tr>
                             <?php
                         endforeach;
                     else :
                         ?>
-                        <tr class="invoice-item-row">
+                        <tr class="invoice-item-row" data-index="0">
+                            <td><input type="date" name="invoice_items[0][date]" value="" style="width: 100%;" /></td>
                             <td><input type="text" name="invoice_items[0][description]" value="" class="large-text" /></td>
-                            <td><input type="number" name="invoice_items[0][quantity]" value="1" class="quantity" min="0" step="0.01" /></td>
-                            <td><input type="number" name="invoice_items[0][rate]" value="0" class="rate" min="0" step="0.01" /></td>
-                            <td><input type="number" name="invoice_items[0][amount]" value="0" class="amount" readonly /></td>
+                            <td><input type="number" name="invoice_items[0][quantity]" value="1" class="quantity" min="0" step="0.01" style="width: 100%;" /></td>
+                            <td><input type="number" name="invoice_items[0][rate]" value="0" class="rate" min="0" step="0.01" style="width: 100%;" /></td>
+                            <td><input type="number" name="invoice_items[0][amount]" value="0" class="amount" readonly style="width: 100%;" /></td>
                             <td><button type="button" class="button remove-item">X</button></td>
                         </tr>
                         <?php
@@ -197,7 +208,10 @@ class Invoice {
                     ?>
                 </tbody>
             </table>
-            <p><button type="button" class="button" id="add-invoice-item"><?php _e( 'Add Item', 'wp-invoice-management' ); ?></button></p>
+            <p>
+                <button type="button" class="button" id="add-invoice-item"><?php _e( 'Add Item', 'wp-invoice-management' ); ?></button>
+                <button type="button" class="button" id="add-invoice-project"><?php _e( 'Add Project Row', 'wp-invoice-management' ); ?></button>
+            </p>
         </div>
         <?php
     }
@@ -296,12 +310,19 @@ class Invoice {
             $items = array();
             foreach ( $_POST['invoice_items'] as $item ) {
                 if ( ! empty( $item['description'] ) ) {
-                    $items[] = array(
+                    $new_item = array(
                         'description' => sanitize_textarea_field( $item['description'] ),
-                        'quantity'    => floatval( $item['quantity'] ),
-                        'rate'        => floatval( $item['rate'] ),
-                        'amount'      => floatval( $item['quantity'] ) * floatval( $item['rate'] ),
+                        'type'        => isset( $item['type'] ) ? sanitize_text_field( $item['type'] ) : 'item',
                     );
+
+                    if ( $new_item['type'] === 'item' ) {
+                        $new_item['date']     = sanitize_text_field( $item['date'] ?? '' );
+                        $new_item['quantity'] = floatval( $item['quantity'] );
+                        $new_item['rate']     = floatval( $item['rate'] );
+                        $new_item['amount']   = floatval( $item['quantity'] ) * floatval( $item['rate'] );
+                    }
+
+                    $items[] = $new_item;
                 }
             }
             update_post_meta( $post_id, '_invoice_items', $items );

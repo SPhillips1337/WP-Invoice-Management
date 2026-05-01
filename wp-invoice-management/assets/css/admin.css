@@ -7,6 +7,18 @@
     width: 100%;
 }
 
-.invoice-item-row td {
-    vertical-align: middle;
+.invoice-section-row td {
+    background: #f0f6fb;
+    padding: 10px !important;
+}
+
+.project-header-input {
+    border: none !important;
+    box-shadow: none !important;
+    font-size: 14px !important;
+    color: #2271b1 !important;
+}
+
+#invoice-items-table th {
+    font-weight: 600;
 }

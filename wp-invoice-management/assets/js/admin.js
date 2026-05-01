@@ -12,27 +12,43 @@ jQuery(document).ready(function($) {
     $('#add-invoice-item').on('click', function() {
         var table = $('#invoice-items-table tbody');
         var rowCount = table.find('tr').length;
-        var newRow = table.find('tr:first').clone();
         
-        newRow.find('input').each(function() {
-            var name = $(this).attr('name');
-            name = name.replace(/\[\d+\]/, '[' + rowCount + ']');
-            $(this).attr('name', name).val('');
-        });
+        var newRow = $(`
+            <tr class="invoice-item-row" data-index="${rowCount}">
+                <td><input type="date" name="invoice_items[${rowCount}][date]" value="" style="width: 100%;" /></td>
+                <td><input type="text" name="invoice_items[${rowCount}][description]" value="" class="large-text" /></td>
+                <td><input type="number" name="invoice_items[${rowCount}][quantity]" value="1" class="quantity" min="0" step="0.01" style="width: 100%;" /></td>
+                <td><input type="number" name="invoice_items[${rowCount}][rate]" value="0" class="rate" min="0" step="0.01" style="width: 100%;" /></td>
+                <td><input type="number" name="invoice_items[${rowCount}][amount]" value="0" class="amount" readonly style="width: 100%;" /></td>
+                <td><button type="button" class="button remove-item">X</button></td>
+            </tr>
+        `);
         
-        newRow.find('.quantity').val(1);
-        newRow.find('.rate, .amount').val(0);
+        table.append(newRow);
+    });
+
+    // Add new project header
+    $('#add-invoice-project').on('click', function() {
+        var table = $('#invoice-items-table tbody');
+        var rowCount = table.find('tr').length;
+        
+        var newRow = $(`
+            <tr class="invoice-section-row" data-index="${rowCount}">
+                <td colspan="5">
+                    <input type="hidden" name="invoice_items[${rowCount}][type]" value="section" />
+                    <input type="text" name="invoice_items[${rowCount}][description]" value="" class="large-text project-header-input" placeholder="Project / Section Header" style="font-weight: bold; background: #f0f6fb;" />
+                </td>
+                <td><button type="button" class="button remove-item">X</button></td>
+            </tr>
+        `);
         
         table.append(newRow);
     });
 
     // Remove item
     $('#invoice-items-wrapper').on('click', '.remove-item', function() {
-        var rows = $('#invoice-items-table tbody tr');
-        if (rows.length > 1) {
-            $(this).closest('tr').remove();
-            calculateInvoiceTotals();
-        }
+        $(this).closest('tr').remove();
+        calculateInvoiceTotals();
     });
 
     function calculateInvoiceTotals() {
