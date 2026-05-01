@@ -5,6 +5,7 @@ invoices/
 AGENTS.md
 docker-compose.yml
 project.json
+**/PLAN.md
 node_modules/
 vendor/
 *.log
