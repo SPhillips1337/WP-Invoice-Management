@@ -34,7 +34,9 @@
         invoiceNumber: document.getElementById('invoiceNumber'),
         confirmModal: document.getElementById('confirmModal'),
         cancelDelete: document.getElementById('cancelDelete'),
-        confirmDelete: document.getElementById('confirmDelete')
+        confirmDelete: document.getElementById('confirmDelete'),
+        sidebarToggle: document.getElementById('sidebarToggle'),
+        appContainer: document.querySelector('.invoice-app')
     };
 
     async function apiCall(endpoint, method = 'GET', body = null) {
@@ -367,6 +369,20 @@
 
         frame.open();
     });
+
+    // Sidebar Toggle Logic
+    if (elements.sidebarToggle) {
+        elements.sidebarToggle.addEventListener('click', () => {
+            const isCollapsed = elements.appContainer.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('wp_invoice_sidebar_collapsed', isCollapsed);
+        });
+
+        // Initialize state from localStorage
+        const savedState = localStorage.getItem('wp_invoice_sidebar_collapsed');
+        if (savedState === 'true') {
+            elements.appContainer.classList.add('sidebar-collapsed');
+        }
+    }
 
     loadInvoices();
 })();
