@@ -3,6 +3,7 @@
 
     let currentInvoiceId = null;
     let invoices = [];
+    let customers = [];
 
     const elements = {
         invoiceList: document.getElementById('invoiceList'),
@@ -41,7 +42,13 @@
         nextPage: document.getElementById('nextPage'),
         currentPage: document.getElementById('currentPage'),
         addProjectHeader: document.getElementById('addProjectHeader'),
-        appContainer: document.querySelector('.invoice-app')
+        appContainer: document.querySelector('.invoice-app'),
+        settingsBtn: document.getElementById('settingsBtn'),
+        settingsModal: document.getElementById('settingsModal'),
+        settingsForm: document.getElementById('settingsForm'),
+        closeSettingsModal: document.querySelector('#settingsModal .close-modal'),
+        useDefaultAddress: document.getElementById('useDefaultAddress'),
+        customerSelect: document.getElementById('customerSelect')
     };
 
     let sortOrder = 'desc'; // Default: most recent first
@@ -106,6 +113,26 @@
                 newInvoice();
             }
         }
+    }
+
+    async function loadCustomers() {
+        try {
+            const response = await apiCall('/customers');
+            customers = response || [];
+            populateCustomerDropdown();
+        } catch (error) {
+            console.error('Failed to load customers:', error);
+        }
+    }
+
+    function populateCustomerDropdown() {
+        if (!elements.customerSelect) return;
+        
+        let html = '<option value="">Select Customer...</option>';
+        customers.forEach(customer => {
+            html += `<option value="${customer.id}">${customer.name}</option>`;
+        });
+        elements.customerSelect.innerHTML = html;
     }
 
     function renderInvoiceList() {
@@ -403,7 +430,7 @@
             <span class="dashicons dashicons-upload"></span>
             <span>Add Logo</span>
         `;
-        elements.fromAddress.value = '';
+        elements.fromAddress.value = WP_INVOICE_API.settings.default_address || '';
         elements.toAddress.value = '';
         elements.invoiceDate.value = new Date().toISOString().split('T')[0];
         elements.dueDate.value = '';
@@ -435,6 +462,29 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    if (elements.useDefaultAddress) {
+        elements.useDefaultAddress.addEventListener('click', () => {
+            elements.fromAddress.value = WP_INVOICE_API.settings.default_address || '';
+        });
+    }
+
+    if (elements.customerSelect) {
+        elements.customerSelect.addEventListener('change', () => {
+            const customerId = elements.customerSelect.value;
+            if (!customerId) return;
+
+            const customer = customers.find(c => c.id == customerId);
+            if (customer) {
+                let addressText = '';
+                if (customer.name) addressText += customer.name + '\n';
+                if (customer.company) addressText += customer.company + '\n';
+                if (customer.address) addressText += customer.address;
+                
+                elements.toAddress.value = addressText.trim();
+            }
+        });
     }
 
     elements.addLineItem.addEventListener('click', () => {
@@ -566,6 +616,7 @@
             elements.settingsForm.querySelector('[name="currency_code"]').value = settings.currency_code;
             elements.settingsForm.querySelector('[name="tax_label"]').value = settings.tax_label;
             elements.settingsForm.querySelector('[name="default_country"]').value = settings.default_country;
+            elements.settingsForm.querySelector('[name="default_address"]').value = settings.default_address || '';
             elements.settingsModal.classList.add('active');
         });
 
@@ -586,7 +637,8 @@
                 currency_symbol: elements.settingsForm.querySelector('[name="currency_symbol"]').value,
                 currency_code: elements.settingsForm.querySelector('[name="currency_code"]').value,
                 tax_label: elements.settingsForm.querySelector('[name="tax_label"]').value,
-                default_country: elements.settingsForm.querySelector('[name="default_country"]').value
+                default_country: elements.settingsForm.querySelector('[name="default_country"]').value,
+                default_address: elements.settingsForm.querySelector('[name="default_address"]').value
             };
 
             btn.disabled = true;
@@ -613,4 +665,5 @@
     }
 
     loadInvoices();
+    loadCustomers();
 })();

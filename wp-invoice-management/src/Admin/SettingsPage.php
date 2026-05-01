@@ -63,6 +63,15 @@ class SettingsPage {
             'wp_invoice_general_section',
             array( 'label_for' => 'default_country', 'default' => 'United Kingdom' )
         );
+
+        add_settings_field(
+            'default_address',
+            __( 'Default Sender Address', 'wp-invoice-management' ),
+            array( $this, 'render_textarea' ),
+            'wp-invoice-settings',
+            'wp_invoice_general_section',
+            array( 'label_for' => 'default_address', 'default' => '' )
+        );
     }
 
     public function render_text_field( $args ) {
@@ -74,6 +83,18 @@ class SettingsPage {
                name="wp_invoice_settings[<?php echo esc_attr( $args['label_for'] ); ?>]" 
                value="<?php echo esc_attr( $value ); ?>" 
                class="regular-text">
+        <?php
+    }
+
+    public function render_textarea( $args ) {
+        $options = get_option( 'wp_invoice_settings' );
+        $value = isset( $options[ $args['label_for'] ] ) ? $options[ $args['label_for'] ] : $args['default'];
+        ?>
+        <textarea id="<?php echo esc_attr( $args['label_for'] ); ?>" 
+                  name="wp_invoice_settings[<?php echo esc_attr( $args['label_for'] ); ?>]" 
+                  rows="5" 
+                  class="large-text"><?php echo esc_textarea( $value ); ?></textarea>
+        <p class="description"><?php _e( 'This address will be prepopulated in the "From" section of new invoices.', 'wp-invoice-management' ); ?></p>
         <?php
     }
 
@@ -98,6 +119,7 @@ class SettingsPage {
             'currency_code'   => 'USD',
             'tax_label'       => 'Tax',
             'default_country' => 'United Kingdom',
+            'default_address' => '',
         );
         $options = get_option( 'wp_invoice_settings', array() );
         return wp_parse_args( $options, $defaults );

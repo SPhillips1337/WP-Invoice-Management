@@ -116,12 +116,16 @@ class REST_API {
             return new \WP_Error( 'invalid_data', 'No data provided', array( 'status' => 400 ) );
         }
 
-        $allowed_fields = array( 'currency_symbol', 'currency_code', 'tax_label', 'default_country' );
+        $allowed_fields = array( 'currency_symbol', 'currency_code', 'tax_label', 'default_country', 'default_address' );
         $current_settings = \Wpim\Invoice\Admin\SettingsPage::get_settings();
         
         foreach ( $allowed_fields as $field ) {
             if ( isset( $settings[ $field ] ) ) {
-                $current_settings[ $field ] = sanitize_text_field( $settings[ $field ] );
+                if ( $field === 'default_address' ) {
+                    $current_settings[ $field ] = sanitize_textarea_field( $settings[ $field ] );
+                } else {
+                    $current_settings[ $field ] = sanitize_text_field( $settings[ $field ] );
+                }
             }
         }
 

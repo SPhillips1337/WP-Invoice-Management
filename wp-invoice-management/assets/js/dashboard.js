@@ -374,6 +374,7 @@
             $form.find('[name="currency_code"]').val(settings.currency_code);
             $form.find('[name="tax_label"]').val(settings.tax_label);
             $form.find('[name="default_country"]').val(settings.default_country);
+            $form.find('[name="default_address"]').val(settings.default_address);
             $('#wp-invoice-settings-modal').fadeIn();
         });
 
@@ -388,7 +389,8 @@
                 currency_symbol: $(this).find('[name="currency_symbol"]').val(),
                 currency_code: $(this).find('[name="currency_code"]').val(),
                 tax_label: $(this).find('[name="tax_label"]').val(),
-                default_country: $(this).find('[name="default_country"]').val()
+                default_country: $(this).find('[name="default_country"]').val(),
+                default_address: $(this).find('[name="default_address"]').val()
             };
 
             $btn.prop('disabled', true).text('Saving...');

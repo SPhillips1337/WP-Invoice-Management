@@ -179,9 +179,13 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                         <label style="display:block; margin-bottom:5px; font-weight:600;">Tax Label</label>
                         <input type="text" name="tax_label" value="" placeholder="Tax" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
                     </div>
-                    <div class="wp-invoice-form-group" style="margin-bottom: 25px;">
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
                         <label style="display:block; margin-bottom:5px; font-weight:600;">Default Country</label>
                         <input type="text" name="default_country" value="" placeholder="United Kingdom" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 25px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Default Sender Address</label>
+                        <textarea name="default_address" rows="4" placeholder="Your Company Name&#10;Your Address&#10;City, Postcode" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></textarea>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="wp-invoice-btn wp-invoice-btn-primary" style="width:100%;">Save Settings</button>

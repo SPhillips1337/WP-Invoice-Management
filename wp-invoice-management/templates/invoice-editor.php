@@ -104,7 +104,21 @@
                                     </div>
                                     <input type="hidden" id="logoId" name="logo_id">
                                 </div>
-                                <textarea id="fromAddress" placeholder="From:&#10;Your Company Name&#10;Address Line 1&#10;City, State ZIP"></textarea>
+                                <div class="section-header">
+                                    <h3>From</h3>
+                                    <button type="button" class="btn-text btn-use-default" id="useDefaultAddress">Use Default</button>
+                                </div>
+                                <textarea id="fromAddress" placeholder="Your Company Name&#10;Address Line 1&#10;City, State ZIP"></textarea>
+
+                                <div class="bill-to-section" style="margin-top: 30px;">
+                                    <div class="section-header" style="justify-content: flex-start; gap: 15px;">
+                                        <h3>Bill To</h3>
+                                        <select id="customerSelect" class="customer-select">
+                                            <option value="">Select Customer...</option>
+                                        </select>
+                                    </div>
+                                    <textarea id="toAddress" placeholder="Client Name&#10;Address Line 1&#10;City, State ZIP"></textarea>
+                                </div>
                             </div>
                             <div class="invoice-meta">
                                 <div class="meta-row">
@@ -124,11 +138,6 @@
                                     <input type="text" id="poNumber" placeholder="PO-001">
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="bill-to-section">
-                            <h3>Bill To</h3>
-                            <textarea id="toAddress" placeholder="Client Name&#10;Address Line 1&#10;City, State ZIP"></textarea>
                         </div>
 
                         <div class="line-items-section">
@@ -228,6 +237,10 @@
                 <div class="form-group">
                     <label>Default Country</label>
                     <input type="text" name="default_country" value="" placeholder="United Kingdom">
+                </div>
+                <div class="form-group">
+                    <label>Default Sender Address</label>
+                    <textarea name="default_address" rows="4" placeholder="Your Company Name&#10;Your Address&#10;City, Postcode"></textarea>
                 </div>
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-primary">Save Settings</button>

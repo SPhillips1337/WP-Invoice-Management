@@ -372,13 +372,62 @@
     color: var(--primary-color);
 }
 
-.logo-preview img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+.invoice-header-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
 }
 
-.company-info textarea {
+.company-info {
+    width: 100%;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.section-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.btn-use-default {
+    font-size: 12px !important;
+    padding: 0 !important;
+    color: var(--primary-color) !important;
+    text-decoration: none !important;
+}
+
+.btn-use-default:hover {
+    text-decoration: underline !important;
+}
+
+.customer-select {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--surface-color);
+    color: var(--text-main);
+    cursor: pointer;
+    max-width: 200px;
+}
+
+.customer-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.company-info textarea,
+.bill-to-section textarea {
     width: 100%;
     min-height: 120px;
     padding: 12px;
@@ -386,15 +435,16 @@
     border-radius: var(--radius-md);
     font-family: inherit;
     font-size: 14px;
+    line-height: 1.5;
     resize: vertical;
+    transition: all 0.2s;
 }
 
 .company-info textarea:focus,
-.invoice-meta input:focus,
 .bill-to-section textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .invoice-meta {
