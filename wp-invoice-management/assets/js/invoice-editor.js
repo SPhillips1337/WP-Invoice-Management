@@ -81,7 +81,7 @@
     async function loadInvoices() {
         try {
             const response = await apiCall(`/invoices?page=${pagination.page}&per_page=${pagination.per_page}&order=${sortOrder.toUpperCase()}`);
-            invoices = response.items || [];
+            invoices = response.invoices || [];
             pagination.total = response.total || 0;
             pagination.pages = response.pages || 1;
             
@@ -164,7 +164,11 @@
     }
 
     function populateEditor(invoice) {
-        elements.invoiceId.textContent = invoice.id;
+        let title = invoice.title || invoice.id;
+        if (!title.toString().toLowerCase().includes('invoice')) {
+            title = 'Invoice #' + title;
+        }
+        elements.invoiceId.textContent = title;
         elements.invoiceNumber.value = invoice.title || '';
         elements.invoiceStatus.value = invoice.status || 'draft';
         elements.logoId.value = invoice.logo_id || '';
@@ -391,7 +395,7 @@
         hideEditor();
         showEditor();
         
-        elements.invoiceId.textContent = 'New';
+        elements.invoiceId.textContent = 'New Invoice';
         elements.invoiceNumber.value = '';
         elements.invoiceStatus.value = 'draft';
         elements.logoId.value = '';
@@ -517,10 +521,12 @@
             localStorage.setItem('wp_invoice_sidebar_collapsed', isCollapsed);
         });
 
-        // Initialize state from localStorage
+        // Initialize state from localStorage (Default to expanded)
         const savedState = localStorage.getItem('wp_invoice_sidebar_collapsed');
         if (savedState === 'true') {
             elements.appContainer.classList.add('sidebar-collapsed');
+        } else {
+            elements.appContainer.classList.remove('sidebar-collapsed');
         }
     }
 

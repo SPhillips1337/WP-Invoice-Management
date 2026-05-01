@@ -104,9 +104,9 @@ class REST_API {
         }
 
         return rest_ensure_response( array(
-            'items' => $invoices,
-            'total' => (int) $query->found_posts,
-            'pages' => $query->max_num_pages,
+            'invoices' => $invoices,
+            'total'    => (int) $query->found_posts,
+            'pages'    => $query->max_num_pages,
         ) );
     }
 

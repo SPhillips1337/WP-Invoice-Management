@@ -11,6 +11,8 @@
  * Domain Path: /languages
  */
 
+define( 'WPIM_VERSION', '0.3.1' );
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }

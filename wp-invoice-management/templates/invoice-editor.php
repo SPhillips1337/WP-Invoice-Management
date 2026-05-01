@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Editor | WP Invoices</title>
-    <link rel="stylesheet" href="<?php echo plugin_dir_url( dirname( __FILE__ ) ); ?>assets/css/frontend.css">
-    <link rel="stylesheet" href="<?php echo plugin_dir_url( dirname( __FILE__ ) ); ?>assets/css/invoice-editor.css">
+    <link rel="stylesheet" href="<?php echo plugin_dir_url( dirname( __FILE__ ) ); ?>assets/css/frontend.css?v=<?php echo WPIM_VERSION; ?>">
+    <link rel="stylesheet" href="<?php echo plugin_dir_url( dirname( __FILE__ ) ); ?>assets/css/invoice-editor.css?v=<?php echo WPIM_VERSION; ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,10 +40,7 @@
                             </button>
                         </div>
                         <button class="btn-icon btn-sort-invoices" id="sortInvoices" title="Sort Invoices">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 5L6 10L1 5" />
-                                <path d="M11 19L6 14L1 19" />
-                            </svg>
+                            <span class="dashicons dashicons-sort"></span>
                         </button>
                         <button class="btn-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -71,7 +68,7 @@
                 <div class="invoice-editor" id="invoiceEditor" style="display: none;">
                     <div class="editor-toolbar">
                         <div class="toolbar-left">
-                            <span class="invoice-number">Invoice #<span id="invoiceId">-</span></span>
+                            <span class="invoice-number"><span id="invoiceId">-</span></span>
                         </div>
                         <div class="toolbar-right">
                             <select id="invoiceStatus" class="status-select">
@@ -212,7 +209,7 @@
         ajaxUrl: '<?php echo admin_url( 'admin-ajax.php' ); ?>'
     };
     </script>
-    <script src="<?php echo plugin_dir_url( dirname( __FILE__ ) ); ?>assets/js/invoice-editor.js"></script>
+    <script src="<?php echo plugin_dir_url( dirname( __FILE__ ) ); ?>assets/js/invoice-editor.js?v=<?php echo WPIM_VERSION; ?>"></script>
     <?php wp_footer(); ?>
 </body>
 </html>

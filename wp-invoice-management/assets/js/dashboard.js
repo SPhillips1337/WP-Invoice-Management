@@ -33,7 +33,7 @@
                 success: function(response) {
                     state.total = response.total;
                     state.pages = response.pages;
-                    renderTable(response.items);
+                    renderTable(response.invoices);
                     renderPagination();
                 },
                 error: function() {

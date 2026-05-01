@@ -442,14 +442,14 @@ class Plugin {
             'wp-invoice-dashboard',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/dashboard.css',
             array(),
-            '0.3.0'
+            WPIM_VERSION
         );
 
         wp_register_script(
             'wp-invoice-dashboard',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/dashboard.js',
             array( 'jquery' ),
-            '0.3.0',
+            WPIM_VERSION,
             true
         );
 
@@ -466,14 +466,14 @@ class Plugin {
             'wp-invoice-frontend',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/frontend.css',
             array(),
-            '0.3.0'
+            WPIM_VERSION
         );
 
         wp_enqueue_script(
             'wp-invoice-frontend',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/frontend.js',
             array( 'jquery' ),
-            '0.3.0',
+            WPIM_VERSION,
             true
         );
 
@@ -502,7 +502,7 @@ class Plugin {
                 'wp-invoice-admin',
                 plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/admin.js',
                 array( 'jquery', 'underscore' ),
-                '0.3.0',
+                WPIM_VERSION,
                 true
             );
         }
