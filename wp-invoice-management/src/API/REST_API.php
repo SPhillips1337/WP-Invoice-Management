@@ -92,6 +92,19 @@ class REST_API {
             'post_status'    => 'publish',
         );
 
+        if ( $orderby === 'date' ) {
+            $args['orderby']  = 'meta_value';
+            $args['meta_key'] = '_invoice_date';
+        } elseif ( $orderby === 'due_date' ) {
+            $args['orderby']  = 'meta_value';
+            $args['meta_key'] = '_invoice_due_date';
+        } elseif ( $orderby === 'total' ) {
+            $args['orderby']  = 'meta_value_num';
+            $args['meta_key'] = '_invoice_total';
+        } elseif ( $orderby === 'title' ) {
+            $args['orderby'] = 'title';
+        }
+
         if ( ! current_user_can( 'manage_options' ) ) {
             $args['author'] = get_current_user_id();
         }

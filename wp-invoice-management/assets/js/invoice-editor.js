@@ -80,7 +80,7 @@
 
     async function loadInvoices() {
         try {
-            const response = await apiCall(`/invoices?page=${pagination.page}&per_page=${pagination.per_page}&order=${sortOrder.toUpperCase()}`);
+            const response = await apiCall(`/invoices?page=${pagination.page}&per_page=${pagination.per_page}&orderby=date&order=${sortOrder.toUpperCase()}`);
             invoices = response.invoices || [];
             pagination.total = response.total || 0;
             pagination.pages = response.pages || 1;
