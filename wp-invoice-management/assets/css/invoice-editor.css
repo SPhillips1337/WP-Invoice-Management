@@ -451,39 +451,81 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-.col-description { width: 50%; }
-.col-qty { width: 10%; text-align: right; }
-.col-rate { width: 15%; text-align: right; }
-.col-amount { width: 15%; text-align: right; }
-.col-actions { width: 10%; text-align: center; }
+.col-date { width: 120px; }
+.col-description { width: auto; }
+.col-qty { width: 80px; }
+.col-rate { width: 120px; }
+.col-amount { width: 120px; }
+.col-actions { width: 40px; }
+
+.line-items-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
 
 .line-items-table input {
     width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
     padding: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
     font-size: 14px;
-    text-align: right;
 }
 
 .line-items-table input:focus {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.project-header-row {
+    background-color: #f8fafc;
+}
+
+.project-header-row td {
+    padding-top: 15px !important;
+    padding-bottom: 5px !important;
+}
+
+.project-header-input {
+    font-weight: 700;
+    font-size: 16px !important;
+    color: var(--text-primary);
+    border-bottom: 2px solid #e2e8f0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding-left: 0 !important;
+}
+
+.project-header-input:focus {
+    border-bottom-color: var(--primary-color) !important;
+    box-shadow: none !important;
+}
+
+.line-item-header-row {
+    background: transparent;
+}
+
+.line-item-header-row td {
+    padding: 10px 8px 5px !important;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: none !important;
 }
 
 .remove-item-btn {
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: #94a3b8;
     cursor: pointer;
-    padding: 4px;
-    border-radius: var(--radius-sm);
-    transition: all 0.15s;
+    padding: 5px;
+    transition: color 0.2s;
 }
 
 .remove-item-btn:hover {
     color: var(--danger-color);
-    background: #fee2e2;
 }
 
 .btn-text {

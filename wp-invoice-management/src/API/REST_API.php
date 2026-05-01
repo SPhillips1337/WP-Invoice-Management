@@ -347,9 +347,11 @@ class REST_API {
                 if ( ! empty( $item['description'] ) ) {
                     $items[] = array(
                         'description' => sanitize_textarea_field( $item['description'] ),
-                        'quantity'    => floatval( $item['quantity'] ),
-                        'rate'        => floatval( $item['rate'] ),
-                        'amount'      => floatval( $item['quantity'] ) * floatval( $item['rate'] ),
+                        'quantity'    => isset( $item['quantity'] ) ? floatval( $item['quantity'] ) : 0,
+                        'rate'        => isset( $item['rate'] ) ? floatval( $item['rate'] ) : 0,
+                        'amount'      => ( isset( $item['quantity'] ) && isset( $item['rate'] ) ) ? ( floatval( $item['quantity'] ) * floatval( $item['rate'] ) ) : 0,
+                        'date'        => isset( $item['date'] ) ? sanitize_text_field( $item['date'] ) : '',
+                        'type'        => isset( $item['type'] ) ? sanitize_text_field( $item['type'] ) : 'item',
                     );
                 }
             }

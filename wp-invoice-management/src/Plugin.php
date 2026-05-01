@@ -225,6 +225,8 @@ class Plugin {
         .status-open { background: #e3f2fd; color: #1565c0; }
         .status-paid { background: #e8f5e9; color: #2e7d32; }
         .status-overdue { background: #ffebee; color: #c62828; }
+        .project-header td { background: #f9fafb; font-weight: bold; border-bottom: 2px solid #eee; padding-top: 15px; }
+        .sub-header td { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #666; background: #fff; padding: 5px 12px; border-bottom: 1px solid #eee; }
         .notes-terms { margin-top: 40px; }
         .notes-terms h3 { font-size: 14px; color: #666; text-transform: uppercase; }
         .notes-terms p { white-space: pre-wrap; }
@@ -307,22 +309,46 @@ class Plugin {
     <?php endif; ?>
 
     <table class="items">
-        <thead>
+        <thead style="display: none;">
             <tr>
+                <th style="width: 80px;">Date</th>
                 <th>Description</th>
-                <th>Qty</th>
-                <th>Rate</th>
-                <th>Amount</th>
+                <th style="width: 50px;">Qty</th>
+                <th style="width: 80px;">Rate</th>
+                <th style="width: 80px;">Amount</th>
             </tr>
         </thead>
         <tbody>
-            <?php foreach ( $items as $item ) : ?>
-            <tr>
-                <td><?php echo esc_html( $item['description'] ); ?></td>
-                <td><?php echo esc_html( $item['quantity'] ); ?></td>
-                <td>$<?php echo number_format( $item['rate'], 2 ); ?></td>
-                <td>$<?php echo number_format( $item['amount'], 2 ); ?></td>
-            </tr>
+            <?php foreach ( $items as $index => $item ) : ?>
+                <?php if ( isset( $item['type'] ) && 'section' === $item['type'] ) : ?>
+                    <tr class="project-header">
+                        <td colspan="5"><?php echo esc_html( $item['description'] ); ?></td>
+                    </tr>
+                    <tr class="sub-header">
+                        <td>Date</td>
+                        <td>Description</td>
+                        <td>Qty</td>
+                        <td>Rate</td>
+                        <td>Amount</td>
+                    </tr>
+                <?php else : ?>
+                    <?php if ( $index === 0 ) : ?>
+                    <tr class="sub-header">
+                        <td>Date</td>
+                        <td>Description</td>
+                        <td>Qty</td>
+                        <td>Rate</td>
+                        <td>Amount</td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr>
+                        <td style="font-size: 12px; color: #666;"><?php echo esc_html( $item['date'] ?? '' ); ?></td>
+                        <td><?php echo esc_html( $item['description'] ); ?></td>
+                        <td><?php echo esc_html( $item['quantity'] ); ?></td>
+                        <td>$<?php echo number_format( floatval( $item['rate'] ), 2 ); ?></td>
+                        <td>$<?php echo number_format( floatval( $item['amount'] ), 2 ); ?></td>
+                    </tr>
+                <?php endif; ?>
             <?php endforeach; ?>
         </tbody>
     </table>

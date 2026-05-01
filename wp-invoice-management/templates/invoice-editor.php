@@ -133,8 +133,9 @@
 
                         <div class="line-items-section">
                             <table class="line-items-table">
-                                <thead>
+                                <thead style="display: none;">
                                     <tr>
+                                        <th class="col-date">Date</th>
                                         <th class="col-description">Description</th>
                                         <th class="col-qty">Qty</th>
                                         <th class="col-rate">Rate</th>
@@ -145,10 +146,16 @@
                                 <tbody id="lineItemsBody">
                                 </tbody>
                             </table>
-                            <button class="btn btn-text" id="addLineItem">
-                                <span class="dashicons dashicons-plus"></span>
-                                Add Line Item
-                            </button>
+                            <div class="line-items-actions">
+                                <button class="btn btn-text" id="addLineItem">
+                                    <span class="dashicons dashicons-plus"></span>
+                                    Add Line Item
+                                </button>
+                                <button class="btn btn-text" id="addProjectHeader">
+                                    <span class="dashicons dashicons-category"></span>
+                                    Add Project
+                                </button>
+                            </div>
                         </div>
 
                         <div class="totals-section">

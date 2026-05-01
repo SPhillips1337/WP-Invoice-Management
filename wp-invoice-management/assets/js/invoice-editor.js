@@ -40,6 +40,7 @@
         prevPage: document.getElementById('prevPage'),
         nextPage: document.getElementById('nextPage'),
         currentPage: document.getElementById('currentPage'),
+        addProjectHeader: document.getElementById('addProjectHeader'),
         appContainer: document.querySelector('.invoice-app')
     };
 
@@ -92,10 +93,18 @@
             const id = urlParams.get('id');
             if (id && !currentInvoiceId) {
                 loadInvoice(parseInt(id));
+            } else if (!id && !currentInvoiceId) {
+                newInvoice();
             }
         } catch (error) {
             console.error('Failed to load invoices:', error);
             elements.invoiceList.innerHTML = '<div class="loading">Failed to load invoices</div>';
+            
+            // Still try to show editor if it's a new invoice
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.get('id')) {
+                newInvoice();
+            }
         }
     }
 
@@ -183,54 +192,105 @@
 
     function renderLineItems(items) {
         if (items.length === 0) {
-            items = [{ description: '', quantity: 1, rate: 0, amount: 0 }];
+            items = [
+                { description: 'Project Name', type: 'section' },
+                { description: '', quantity: 1, rate: 0, amount: 0, date: '', type: 'item' }
+            ];
         }
 
-        elements.lineItemsBody.innerHTML = items.map((item, index) => `
-            <tr data-index="${index}">
-                <td><input type="text" class="item-description" value="${escapeHtml(item.description)}" placeholder="Item description"></td>
-                <td><input type="number" class="item-quantity" value="${item.quantity}" min="0" step="1"></td>
-                <td><input type="number" class="item-rate" value="${item.rate}" min="0" step="0.01"></td>
-                <td><input type="number" class="item-amount" value="${item.amount || 0}" readonly></td>
-                <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
-            </tr>
-        `).join('');
+        let html = '';
+        items.forEach((item, index) => {
+            if (item.type === 'section') {
+                html += `
+                    <tr data-index="${index}" class="project-header-row" data-type="section">
+                        <td colspan="5">
+                            <input type="text" class="item-description project-header-input" value="${escapeHtml(item.description)}" placeholder="Project Name (e.g. Website Redesign)">
+                        </td>
+                        <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
+                    </tr>
+                    <tr class="line-item-header-row">
+                        <td>Date</td>
+                        <td>Description</td>
+                        <td>Qty</td>
+                        <td>Rate</td>
+                        <td>Amount</td>
+                        <td></td>
+                    </tr>
+                `;
+            } else {
+                // If it's the first item and not a section, add a sub-header anyway
+                if (index === 0) {
+                    html += `
+                        <tr class="line-item-header-row">
+                            <td>Date</td>
+                            <td>Description</td>
+                            <td>Qty</td>
+                            <td>Rate</td>
+                            <td>Amount</td>
+                            <td></td>
+                        </tr>
+                    `;
+                }
+                html += `
+                    <tr data-index="${index}" data-type="item">
+                        <td><input type="text" class="item-date" value="${item.date || ''}" placeholder="DD/MM/YY"></td>
+                        <td><input type="text" class="item-description" value="${escapeHtml(item.description)}" placeholder="Item description"></td>
+                        <td><input type="number" class="item-quantity" value="${item.quantity}" min="0" step="1"></td>
+                        <td><input type="number" class="item-rate" value="${item.rate}" min="0" step="0.01"></td>
+                        <td><input type="number" class="item-amount" value="${item.amount || 0}" readonly></td>
+                        <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
+                    </tr>
+                `;
+            }
+        });
 
+        elements.lineItemsBody.innerHTML = html;
         attachLineItemListeners();
     }
 
     function attachLineItemListeners() {
-        elements.lineItemsBody.querySelectorAll('tr').forEach(row => {
-            const quantityInput = row.querySelector('.item-quantity');
-            const rateInput = row.querySelector('.item-rate');
-            const amountInput = row.querySelector('.item-amount');
+        elements.lineItemsBody.querySelectorAll('tr[data-type]').forEach(row => {
+            const isSection = row.dataset.type === 'section';
+            
+            if (!isSection) {
+                const quantityInput = row.querySelector('.item-quantity');
+                const rateInput = row.querySelector('.item-rate');
+                const amountInput = row.querySelector('.item-amount');
 
-            const updateAmount = () => {
-                const quantity = parseFloat(quantityInput.value) || 0;
-                const rate = parseFloat(rateInput.value) || 0;
-                amountInput.value = (quantity * rate).toFixed(2);
-                calculateTotals();
-            };
+                const updateAmount = () => {
+                    const quantity = parseFloat(quantityInput.value) || 0;
+                    const rate = parseFloat(rateInput.value) || 0;
+                    amountInput.value = (quantity * rate).toFixed(2);
+                    calculateTotals();
+                };
 
-            quantityInput.addEventListener('input', updateAmount);
-            rateInput.addEventListener('input', updateAmount);
+                quantityInput.addEventListener('input', updateAmount);
+                rateInput.addEventListener('input', updateAmount);
+            }
 
             row.querySelector('.remove-item-btn').addEventListener('click', () => {
-                const rows = elements.lineItemsBody.querySelectorAll('tr');
-                if (rows.length > 1) {
-                    row.remove();
-                    calculateTotals();
+                // If it's a section, we also need to remove the sub-header row that follows it
+                if (isSection) {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow && nextRow.classList.contains('line-item-header-row')) {
+                        nextRow.remove();
+                    }
                 }
+                row.remove();
+                calculateTotals();
             });
         });
     }
 
-    function calculateTotals(invoice = null) {
+    function calculateTotals() {
         let subtotal = 0;
         
-        elements.lineItemsBody.querySelectorAll('tr').forEach(row => {
-            const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
-            subtotal += amount;
+        elements.lineItemsBody.querySelectorAll('tr[data-type="item"]').forEach(row => {
+            const amountInput = row.querySelector('.item-amount');
+            if (amountInput) {
+                const amount = parseFloat(amountInput.value) || 0;
+                subtotal += amount;
+            }
         });
 
         const tax = parseFloat(elements.taxAmount.value) || 0;
@@ -245,11 +305,25 @@
 
     function getInvoiceData() {
         const items = [];
-        elements.lineItemsBody.querySelectorAll('tr').forEach(row => {
-            const description = row.querySelector('.item-description').value.trim();
-            if (description) {
+        elements.lineItemsBody.querySelectorAll('tr[data-type]').forEach(row => {
+            const isSection = row.dataset.type === 'section';
+            const descriptionInput = row.querySelector('.item-description');
+            const description = descriptionInput ? descriptionInput.value.trim() : '';
+            
+            if (isSection) {
                 items.push({
                     description,
+                    type: 'section',
+                    quantity: 0,
+                    rate: 0,
+                    amount: 0,
+                    date: ''
+                });
+            } else {
+                items.push({
+                    description,
+                    type: 'item',
+                    date: row.querySelector('.item-date').value,
                     quantity: parseFloat(row.querySelector('.item-quantity').value) || 0,
                     rate: parseFloat(row.querySelector('.item-rate').value) || 0,
                     amount: parseFloat(row.querySelector('.item-amount').value) || 0
@@ -336,7 +410,10 @@
         elements.discountAmount.value = 0;
         elements.shippingAmount.value = 0;
         
-        renderLineItems([{ description: '', quantity: 1, rate: 0, amount: 0 }]);
+        renderLineItems([
+            { description: 'Project Name', type: 'section' },
+            { description: '', quantity: 1, rate: 0, amount: 0, date: '', type: 'item' }
+        ]);
         calculateTotals();
     }
 
@@ -361,11 +438,30 @@
         const index = tbody.children.length;
         const tr = document.createElement('tr');
         tr.dataset.index = index;
+        tr.dataset.type = 'item';
         tr.innerHTML = `
+            <td><input type="text" class="item-date" value="" placeholder="DD/MM/YY"></td>
             <td><input type="text" class="item-description" value="" placeholder="Item description"></td>
             <td><input type="number" class="item-quantity" value="1" min="0" step="1"></td>
             <td><input type="number" class="item-rate" value="0" min="0" step="0.01"></td>
             <td><input type="number" class="item-amount" value="0" readonly></td>
+            <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
+        `;
+        tbody.appendChild(tr);
+        attachLineItemListeners();
+    });
+
+    elements.addProjectHeader.addEventListener('click', () => {
+        const tbody = elements.lineItemsBody;
+        const index = tbody.children.length;
+        const tr = document.createElement('tr');
+        tr.dataset.index = index;
+        tr.dataset.type = 'section';
+        tr.className = 'project-header-row';
+        tr.innerHTML = `
+            <td colspan="5">
+                <input type="text" class="item-description project-header-input" value="" placeholder="Project Name (e.g. Website Redesign)">
+            </td>
             <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
         `;
         tbody.appendChild(tr);
