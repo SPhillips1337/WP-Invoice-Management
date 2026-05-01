@@ -1,6 +1,6 @@
 # WP Invoice Management
 
-A multi-user invoicing plugin for WordPress, designed to provide a seamless experience similar to [invoice-generator.com](https://invoice-generator.com).
+A multi-user invoicing plugin for WordPress, designed to provide a seamless experience.
 
 ## 🚀 Overview
 
@@ -38,6 +38,6 @@ This project includes a Docker Compose setup for easy local development.
 4.  **Activate Plugin**:
     Log in to the WordPress admin panel at `http://localhost:9992` and activate the **WP Invoice Management** plugin.
 
-## 📄 License
+## 📜 License
 
-GPLv2 or later.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

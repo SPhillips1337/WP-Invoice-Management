@@ -1,5 +1,5 @@
 {
-  "name": "your-vendor/wp-invoice-management",
+  "name": "wpim/wp-invoice-management",
   "description": "Multi user invoicing plugin for WordPress.",
   "type": "wordpress-plugin",
   "require": {
