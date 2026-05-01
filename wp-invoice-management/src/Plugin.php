@@ -101,6 +101,9 @@ class Plugin {
             auth_redirect();
         }
 
+        wp_enqueue_style( 'wp-invoice-dashboard' );
+        wp_enqueue_script( 'wp-invoice-dashboard' );
+
         $template_path = dirname( dirname( __FILE__ ) ) . '/templates/dashboard-app.php';
         if ( file_exists( $template_path ) ) {
             include $template_path;

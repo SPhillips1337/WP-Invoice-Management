@@ -15,7 +15,7 @@
     <div class="invoice-app">
         <header class="app-header">
             <div class="header-left">
-                <h1>WP Invoices</h1>
+                <h1><a href="<?php echo esc_url( add_query_arg( 'invoice_dashboard', '1', home_url() ) ); ?>" class="logo-link">WP Invoices</a></h1>
             </div>
             <div class="header-right">
                 <button class="btn btn-secondary" id="newInvoiceBtn">
@@ -30,6 +30,15 @@
                 <div class="panel-header">
                     <h2>Invoices</h2>
                     <div class="panel-actions">
+                        <div class="pagination-info">
+                            <button class="btn-icon" id="prevPage" title="Previous Page">
+                                <span class="dashicons dashicons-arrow-left-alt2"></span>
+                            </button>
+                            <span id="currentPage">1 / 1</span>
+                            <button class="btn-icon" id="nextPage" title="Next Page">
+                                <span class="dashicons dashicons-arrow-right-alt2"></span>
+                            </button>
+                        </div>
                         <button class="btn-icon btn-sort-invoices" id="sortInvoices" title="Sort Invoices">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 5L6 10L1 5" />

@@ -53,11 +53,11 @@
             items.forEach(function(item) {
                 html += '<tr>' +
                     '<td><a href="' + item.edit_url + '" class="wp-invoice-ref">' + item.title + '</a></td>' +
-                    '<td>' + (item.customer || '-') + '</td>' +
+                    '<td>' + (item.to || '-') + '</td>' +
                     '<td>' + item.date + '</td>' +
                     '<td>' + item.due_date + '</td>' +
-                    '<td><span class="status-badge status-' + item.status.toLowerCase() + '">' + item.status + '</span></td>' +
-                    '<td class="text-right">£' + parseFloat(item.total).toFixed(2) + '</td>' +
+                    '<td><span class="status-badge status-' + (item.status ? item.status.toLowerCase() : 'open') + '">' + (item.status || 'Open') + '</span></td>' +
+                    '<td class="text-right">$' + parseFloat(item.total).toFixed(2) + '</td>' +
                     '<td class="text-center">' +
                         '<a href="' + item.view_url + '" target="_blank" title="View PDF">📄</a> ' +
                         '<a href="' + item.edit_url + '" title="Edit">✏️</a>' +

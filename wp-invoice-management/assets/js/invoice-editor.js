@@ -37,10 +37,19 @@
         confirmDelete: document.getElementById('confirmDelete'),
         sidebarToggle: document.getElementById('sidebarToggle'),
         sortInvoices: document.getElementById('sortInvoices'),
+        prevPage: document.getElementById('prevPage'),
+        nextPage: document.getElementById('nextPage'),
+        currentPage: document.getElementById('currentPage'),
         appContainer: document.querySelector('.invoice-app')
     };
 
     let sortOrder = 'desc'; // Default: most recent first
+    let pagination = {
+        page: 1,
+        per_page: 10,
+        total: 0,
+        pages: 1
+    };
 
     async function apiCall(endpoint, method = 'GET', body = null) {
         const options = {
@@ -53,7 +62,14 @@
         if (body) {
             options.body = JSON.stringify(body);
         }
-        const response = await fetch(`${WP_INVOICE_API.root}${endpoint}`, options);
+
+        // Handle plain permalinks where root already has a query string (?rest_route=)
+        let url = WP_INVOICE_API.root + endpoint;
+        if (WP_INVOICE_API.root.includes('?') && endpoint.includes('?')) {
+            url = WP_INVOICE_API.root + endpoint.replace('?', '&');
+        }
+
+        const response = await fetch(url, options);
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'API request failed');
@@ -63,9 +79,12 @@
 
     async function loadInvoices() {
         try {
-            const response = await apiCall('/invoices');
+            const response = await apiCall(`/invoices?page=${pagination.page}&per_page=${pagination.per_page}&order=${sortOrder.toUpperCase()}`);
             invoices = response.items || [];
-            sortInvoices();
+            pagination.total = response.total || 0;
+            pagination.pages = response.pages || 1;
+            
+            updatePaginationUI();
             renderInvoiceList();
 
             // Check if we have an ID in the URL to load
@@ -88,10 +107,14 @@
 
         elements.invoiceList.innerHTML = invoices.map(inv => `
             <div class="invoice-item ${inv.id === currentInvoiceId ? 'active' : ''}" data-id="${inv.id}">
-                <div class="invoice-item-title">${inv.title || 'Invoice #' + inv.id}</div>
+                <div class="invoice-item-header">
+                    <div class="invoice-item-title">${inv.title || 'Invoice #' + inv.id}</div>
+                    <span class="invoice-item-amount">$${(inv.total || 0).toFixed(2)}</span>
+                </div>
+                <div class="invoice-item-customer">${inv.to ? inv.to.split('\n')[0] : 'No Client'}</div>
                 <div class="invoice-item-meta">
                     <span class="status-badge ${inv.status || 'draft'}">${inv.status || 'draft'}</span>
-                    <span class="invoice-item-amount">$${(inv.total || 0).toFixed(2)}</span>
+                    <span class="invoice-item-date">${inv.date || ''}</span>
                 </div>
             </div>
         `).join('');
@@ -101,12 +124,21 @@
         });
     }
 
+    function updatePaginationUI() {
+        if (elements.currentPage) {
+            elements.currentPage.textContent = `${pagination.page} / ${pagination.pages}`;
+        }
+        if (elements.prevPage) {
+            elements.prevPage.disabled = pagination.page <= 1;
+        }
+        if (elements.nextPage) {
+            elements.nextPage.disabled = pagination.page >= pagination.pages;
+        }
+    }
+
+    // Remove client-side sortInvoices as we now sort on server
     function sortInvoices() {
-        invoices.sort((a, b) => {
-            const dateA = new Date(a.date || 0);
-            const dateB = new Date(b.date || 0);
-            return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-        });
+        // No longer needed, loadInvoices handles it
     }
 
     async function loadInvoice(id) {
@@ -399,11 +431,28 @@
     if (elements.sortInvoices) {
         elements.sortInvoices.addEventListener('click', () => {
             sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
-            sortInvoices();
-            renderInvoiceList();
+            pagination.page = 1;
+            loadInvoices();
             
-            // Optional: Update button icon or title to reflect state
             elements.sortInvoices.title = `Sorted by Date (${sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})`;
+        });
+    }
+
+    if (elements.prevPage) {
+        elements.prevPage.addEventListener('click', () => {
+            if (pagination.page > 1) {
+                pagination.page--;
+                loadInvoices();
+            }
+        });
+    }
+
+    if (elements.nextPage) {
+        elements.nextPage.addEventListener('click', () => {
+            if (pagination.page < pagination.pages) {
+                pagination.page++;
+                loadInvoices();
+            }
         });
     }
 
