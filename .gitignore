@@ -1,3 +1,10 @@
 .aider*
 Invoices Apr-30-26.csv
 invoices/
+.antigravity/
+AGENTS.md
+docker-compose.yml
+project.json
+node_modules/
+vendor/
+*.log
