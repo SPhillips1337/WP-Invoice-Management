@@ -28,7 +28,12 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
     </div>
 
     <div class="wp-invoice-container">
-        <div class="wp-invoice-card">
+        <div class="wp-invoice-tabs" style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <button id="wp-invoice-view-invoices" class="wp-invoice-tab-btn active">Invoices</button>
+            <button id="wp-invoice-view-customers" class="wp-invoice-tab-btn">Customers</button>
+        </div>
+
+        <div id="wp-invoice-invoices-view" class="wp-invoice-card">
             <div class="wp-invoice-table-toolbar">
                 <div class="wp-invoice-search">
                     <span class="icon">🔍</span>
@@ -67,6 +72,38 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
             </div>
         </div>
 
+        <div id="wp-invoice-customers-view" class="wp-invoice-card" style="display:none;">
+            <div class="wp-invoice-table-toolbar">
+                <button id="wp-invoice-add-customer-trigger" class="wp-invoice-btn wp-invoice-btn-primary" style="margin-right: auto;">
+                    <span class="icon">＋</span> Add Customer
+                </button>
+                <div class="wp-invoice-search">
+                    <span class="icon">🔍</span>
+                    <input type="text" id="wp-customer-search-input" placeholder="Search customers..." />
+                </div>
+            </div>
+
+            <div class="wp-invoice-table-container">
+                <table id="wp-customer-table">
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Company</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Website</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wp-customer-list-body">
+                        <tr>
+                            <td colspan="6" class="text-center py-8">Loading customers...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="wp-invoice-import-overlay" class="wp-invoice-overlay" style="display:none;">
             <div class="wp-invoice-modal">
                 <h3>Importing Invoices</h3>
@@ -75,6 +112,48 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                 </div>
                 <p id="wp-invoice-progress-status">Uploading...</p>
                 <div id="wp-invoice-import-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Modal -->
+    <div id="wp-invoice-customer-modal" class="wp-invoice-overlay" style="display:none;">
+        <div class="wp-invoice-modal">
+            <div class="wp-invoice-modal-header">
+                <h3 id="customer-modal-title">Add Customer</h3>
+                <button class="wp-invoice-modal-close" style="float:right; border:none; background:none; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div class="wp-invoice-modal-body" style="padding: 20px 0;">
+                <form id="wp-invoice-customer-form">
+                    <input type="hidden" name="customer_id" value="" />
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Customer Name</label>
+                        <input type="text" name="name" required class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Company Name</label>
+                        <input type="text" name="company" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Email</label>
+                        <input type="email" name="email" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Phone</label>
+                        <input type="tel" name="phone" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Website URL</label>
+                        <input type="url" name="url" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 25px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Address</label>
+                        <textarea name="address" rows="3" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="wp-invoice-btn wp-invoice-btn-primary" style="width:100%;">Save Customer</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

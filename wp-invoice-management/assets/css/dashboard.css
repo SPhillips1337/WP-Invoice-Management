@@ -78,6 +78,30 @@
     border-color: #cbd5e1;
 }
 
+.wp-invoice-tab-btn {
+    padding: 10px 24px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wp-invoice-tab-btn.active {
+    background: white;
+    color: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
+}
+
+.wp-invoice-tab-btn:hover:not(.active) {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
 .wp-invoice-card {
     background: white;
     border-radius: 12px;
@@ -126,12 +150,12 @@
     overflow-x: auto;
 }
 
-#wp-invoice-table {
+#wp-invoice-table, #wp-customer-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-#wp-invoice-table th {
+#wp-invoice-table th, #wp-customer-table th {
     background: #f8fafc;
     padding: 12px 24px;
     text-align: left;
@@ -144,17 +168,17 @@
     cursor: pointer;
 }
 
-#wp-invoice-table th:hover {
+#wp-invoice-table th:hover, #wp-customer-table th:hover {
     color: #0f172a;
 }
 
-#wp-invoice-table td {
+#wp-invoice-table td, #wp-customer-table td {
     padding: 16px 24px;
     border-bottom: 1px solid #f1f5f9;
     font-size: 14px;
 }
 
-#wp-invoice-table tr:hover td {
+#wp-invoice-table tr:hover td, #wp-customer-table tr:hover td {
     background-color: #f8fafc;
 }
 

@@ -52,6 +52,24 @@ class REST_API {
                 'callback' => array( $this, 'get_customers' ),
                 'permission_callback' => array( $this, 'check_permission' ),
             ),
+            array(
+                'methods'  => 'POST',
+                'callback' => array( $this, 'create_customer' ),
+                'permission_callback' => array( $this, 'check_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'wp-invoice/v1', '/customers/(?P<id>\d+)', array(
+            array(
+                'methods'  => 'GET',
+                'callback' => array( $this, 'get_customer' ),
+                'permission_callback' => array( $this, 'check_permission' ),
+            ),
+            array(
+                'methods'  => 'PUT',
+                'callback' => array( $this, 'update_customer' ),
+                'permission_callback' => array( $this, 'check_permission' ),
+            ),
         ) );
  
         register_rest_route( 'wp-invoice/v1', '/import/upload', array(
@@ -425,6 +443,79 @@ class REST_API {
             update_post_meta( $post_id, '_invoice_subtotal', $subtotal );
             update_post_meta( $post_id, '_invoice_total', $total );
         }
+    }
+
+    public function create_customer( $request ) {
+        $data = $request->get_json_params();
+        if ( empty( $data['name'] ) ) {
+            return new \WP_Error( 'missing_name', 'Customer Name is required', array( 'status' => 400 ) );
+        }
+
+        $customer_id = wp_insert_post( array(
+            'post_type'   => 'wp_customer',
+            'post_title'  => $data['name'],
+            'post_status' => 'publish',
+        ) );
+
+        if ( is_wp_error( $customer_id ) ) {
+            return $customer_id;
+        }
+
+        $this->save_customer_meta( $customer_id, $data );
+
+        return rest_ensure_response( $this->get_customer_data( $customer_id ) );
+    }
+
+    public function get_customer( $request ) {
+        $id = $request['id'];
+        return rest_ensure_response( $this->get_customer_data( $id ) );
+    }
+
+    public function update_customer( $request ) {
+        $id = $request['id'];
+        $data = $request->get_json_params();
+
+        if ( ! empty( $data['name'] ) ) {
+            wp_update_post( array(
+                'ID'         => $id,
+                'post_title' => $data['name'],
+            ) );
+        }
+
+        $this->save_customer_meta( $id, $data );
+
+        return rest_ensure_response( $this->get_customer_data( $id ) );
+    }
+
+    private function save_customer_meta( $customer_id, $data ) {
+        $fields = array(
+            'name'    => '_customer_name',
+            'company' => '_customer_company',
+            'email'   => '_customer_email',
+            'phone'   => '_customer_phone',
+            'url'     => '_customer_url',
+            'address' => '_customer_address',
+        );
+
+        foreach ( $fields as $key => $meta_key ) {
+            if ( isset( $data[ $key ] ) ) {
+                update_post_meta( $customer_id, $meta_key, sanitize_text_field( $data[ $key ] ) );
+            }
+        }
+    }
+
+    private function get_customer_data( $id ) {
+        $post = get_post( $id );
+        return array(
+            'id'       => $post->ID,
+            'title'    => $post->post_title,
+            'name'     => get_post_meta( $post->ID, '_customer_name', true ),
+            'company'  => get_post_meta( $post->ID, '_customer_company', true ),
+            'email'    => get_post_meta( $post->ID, '_customer_email', true ),
+            'phone'    => get_post_meta( $post->ID, '_customer_phone', true ),
+            'url'      => get_post_meta( $post->ID, '_customer_url', true ),
+            'address'  => get_post_meta( $post->ID, '_customer_address', true ),
+        );
     }
 
     private function prepare_invoice( $post ) {

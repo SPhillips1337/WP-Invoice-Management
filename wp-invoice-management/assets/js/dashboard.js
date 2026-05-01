@@ -5,6 +5,7 @@
         if (!$('#wp-invoice-dashboard-app').length) return;
 
         var state = {
+            view: 'invoices',
             page: 1,
             per_page: 10,
             search: '',
@@ -42,6 +43,69 @@
             });
         }
 
+        function loadCustomers() {
+            var $body = $('#wp-customer-list-body');
+            $body.html('<tr><td colspan="6" class="text-center py-8">Loading customers...</td></tr>');
+
+            $.ajax({
+                url: wpApiSettings.root + 'wp-invoice/v1/customers',
+                data: {
+                    search: state.search
+                },
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+                },
+                success: function(response) {
+                    renderCustomersTable(response);
+                },
+                error: function() {
+                    $body.html('<tr><td colspan="6" class="text-center py-8 text-red-500">Failed to load customers.</td></tr>');
+                }
+            });
+        }
+
+        function renderCustomersTable(items) {
+            var $body = $('#wp-customer-list-body');
+            if (!items.length) {
+                $body.html('<tr><td colspan="6" class="text-center py-8">No customers found.</td></tr>');
+                return;
+            }
+
+            var html = '';
+            items.forEach(function(item) {
+                html += '<tr>' +
+                    '<td><strong>' + (item.name || '-') + '</strong></td>' +
+                    '<td>' + (item.company || '-') + '</td>' +
+                    '<td>' + (item.email || '-') + '</td>' +
+                    '<td>' + (item.phone || '-') + '</td>' +
+                    '<td>' + (item.url ? '<a href="' + item.url + '" target="_blank">' + item.url.replace(/^https?:\/\//, '') + '</a>' : '-') + '</td>' +
+                    '<td class="text-center">' +
+                        '<button class="wp-invoice-btn wp-invoice-btn-secondary btn-sm edit-customer" data-id="' + item.id + '">Edit</button>' +
+                    '</td>' +
+                '</tr>';
+            });
+            $body.html(html);
+        }
+
+        // View Switching
+        $('#wp-invoice-view-invoices').on('click', function() {
+            state.view = 'invoices';
+            $('.wp-invoice-tab-btn').removeClass('active');
+            $(this).addClass('active');
+            $('#wp-invoice-invoices-view').show();
+            $('#wp-invoice-customers-view').hide();
+            loadInvoices();
+        });
+
+        $('#wp-invoice-view-customers').on('click', function() {
+            state.view = 'customers';
+            $('.wp-invoice-tab-btn').removeClass('active');
+            $(this).addClass('active');
+            $('#wp-invoice-invoices-view').hide();
+            $('#wp-invoice-customers-view').show();
+            loadCustomers();
+        });
+
         function renderTable(items) {
             var $body = $('#wp-invoice-list-body');
             if (!items.length) {
@@ -67,6 +131,81 @@
             $body.html(html);
         }
 
+        // Customer Logic
+        $('#wp-invoice-add-customer-trigger').on('click', function() {
+            var $modal = $('#wp-invoice-customer-modal');
+            $modal.find('#customer-modal-title').text('Add Customer');
+            $modal.find('form')[0].reset();
+            $modal.find('[name="customer_id"]').val('');
+            $modal.fadeIn();
+        });
+
+        $(document).on('click', '.edit-customer', function() {
+            var id = $(this).data('id');
+            var $modal = $('#wp-invoice-customer-modal');
+            $modal.find('#customer-modal-title').text('Edit Customer');
+            
+            $.ajax({
+                url: wpApiSettings.root + 'wp-invoice/v1/customers/' + id,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+                },
+                success: function(customer) {
+                    $modal.find('[name="customer_id"]').val(customer.id);
+                    $modal.find('[name="name"]').val(customer.name);
+                    $modal.find('[name="company"]').val(customer.company);
+                    $modal.find('[name="email"]').val(customer.email);
+                    $modal.find('[name="phone"]').val(customer.phone);
+                    $modal.find('[name="url"]').val(customer.url);
+                    $modal.find('[name="address"]').val(customer.address);
+                    $modal.fadeIn();
+                }
+            });
+        });
+
+        $('#wp-invoice-customer-form').on('submit', function(e) {
+            e.preventDefault();
+            var $btn = $(this).find('button[type="submit"]');
+            var id = $(this).find('[name="customer_id"]').val();
+            var data = {
+                name: $(this).find('[name="name"]').val(),
+                company: $(this).find('[name="company"]').val(),
+                email: $(this).find('[name="email"]').val(),
+                phone: $(this).find('[name="phone"]').val(),
+                url: $(this).find('[name="url"]').val(),
+                address: $(this).find('[name="address"]').val()
+            };
+
+            var url = wpApiSettings.root + 'wp-invoice/v1/customers';
+            var method = 'POST';
+            
+            if (id) {
+                url += '/' + id;
+                method = 'PUT';
+            }
+
+            $btn.prop('disabled', true).text('Saving...');
+
+            $.ajax({
+                url: url,
+                method: method,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+                },
+                success: function() {
+                    $('#wp-invoice-customer-modal').fadeOut();
+                    loadCustomers();
+                    $btn.prop('disabled', false).text('Save Customer');
+                },
+                error: function() {
+                    alert('Failed to save customer.');
+                    $btn.prop('disabled', false).text('Save Customer');
+                }
+            });
+        });
+
         function renderPagination() {
             var start = (state.page - 1) * state.per_page + 1;
             var end = Math.min(state.page * state.per_page, state.total);
@@ -83,11 +222,19 @@
 
         // Search
         var searchTimer;
-        $('#wp-invoice-search-input').on('input', function() {
+        $('#wp-invoice-search-input, #wp-customer-search-input').on('input', function() {
+            var $input = $(this);
             clearTimeout(searchTimer);
-            state.search = $(this).val();
+            state.search = $input.val();
             state.page = 1;
-            searchTimer = setTimeout(loadInvoices, 500);
+            
+            searchTimer = setTimeout(function() {
+                if (state.view === 'invoices') {
+                    loadInvoices();
+                } else {
+                    loadCustomers();
+                }
+            }, 500);
         });
 
         // Sorting
@@ -231,7 +378,7 @@
         });
 
         $('.wp-invoice-modal-close').on('click', function() {
-            $('#wp-invoice-settings-modal').fadeOut();
+            $('.wp-invoice-overlay').fadeOut();
         });
 
         $('#wp-invoice-settings-form').on('submit', function(e) {
