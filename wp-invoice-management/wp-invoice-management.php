@@ -2,11 +2,11 @@
 /**
  * Plugin Name: WP Invoice Management
  * Plugin URI:  https://example.com/wp-invoice-management
- * Description: Multi user invoicing functionality similar to invoice-generator.com
+ * Description: Multi user invoicing system
  * Version:     0.3.0
- * Author:      Your Name
- * Author URI:  https://example.com
- * License:     GPLv2 or later
+ * Author:      Stephen Phillips
+ * Author URI:  https://www.stephenphillips.co.uk
+ * License:     MIT Licence
  * Text Domain: wp-invoice-management
  * Domain Path: /languages
  */
