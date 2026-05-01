@@ -36,8 +36,11 @@
         cancelDelete: document.getElementById('cancelDelete'),
         confirmDelete: document.getElementById('confirmDelete'),
         sidebarToggle: document.getElementById('sidebarToggle'),
+        sortInvoices: document.getElementById('sortInvoices'),
         appContainer: document.querySelector('.invoice-app')
     };
+
+    let sortOrder = 'desc'; // Default: most recent first
 
     async function apiCall(endpoint, method = 'GET', body = null) {
         const options = {
@@ -62,6 +65,7 @@
         try {
             const response = await apiCall('/invoices');
             invoices = response.items || [];
+            sortInvoices();
             renderInvoiceList();
 
             // Check if we have an ID in the URL to load
@@ -94,6 +98,14 @@
 
         elements.invoiceList.querySelectorAll('.invoice-item').forEach(item => {
             item.addEventListener('click', () => loadInvoice(parseInt(item.dataset.id)));
+        });
+    }
+
+    function sortInvoices() {
+        invoices.sort((a, b) => {
+            const dateA = new Date(a.date || 0);
+            const dateB = new Date(b.date || 0);
+            return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
         });
     }
 
@@ -382,6 +394,17 @@
         if (savedState === 'true') {
             elements.appContainer.classList.add('sidebar-collapsed');
         }
+    }
+
+    if (elements.sortInvoices) {
+        elements.sortInvoices.addEventListener('click', () => {
+            sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+            sortInvoices();
+            renderInvoiceList();
+            
+            // Optional: Update button icon or title to reflect state
+            elements.sortInvoices.title = `Sorted by Date (${sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})`;
+        });
     }
 
     loadInvoices();

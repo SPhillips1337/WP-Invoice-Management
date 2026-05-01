@@ -29,12 +29,20 @@
             <aside class="invoice-list-panel">
                 <div class="panel-header">
                     <h2>Invoices</h2>
-                    <button class="btn-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="9" y1="3" x2="9" y2="21"></line>
-                        </svg>
-                    </button>
+                    <div class="panel-actions">
+                        <button class="btn-icon btn-sort-invoices" id="sortInvoices" title="Sort Invoices">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 5L6 10L1 5" />
+                                <path d="M11 19L6 14L1 19" />
+                            </svg>
+                        </button>
+                        <button class="btn-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="invoice-list" id="invoiceList">
                     <div class="loading">Loading invoices...</div>

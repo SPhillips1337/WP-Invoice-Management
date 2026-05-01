@@ -48,7 +48,8 @@
     overflow: hidden;
 }
 
-.btn-sidebar-toggle {
+.btn-sidebar-toggle,
+.btn-icon {
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -62,9 +63,16 @@
     outline: none;
 }
 
-.btn-sidebar-toggle:hover {
+.btn-sidebar-toggle:hover,
+.btn-icon:hover {
     background: var(--bg-color);
     color: var(--primary-color);
+}
+
+.panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .invoice-list-panel {
@@ -107,7 +115,8 @@
     transition: opacity 0.2s ease;
 }
 
-.sidebar-collapsed .panel-header h2 {
+.sidebar-collapsed .panel-header h2,
+.sidebar-collapsed .panel-actions {
     display: none;
 }
 
