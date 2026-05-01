@@ -28,7 +28,7 @@ class Invoice {
             'label'               => __( 'Invoices', 'wp-invoice-management' ),
             'labels'              => $labels,
             'public'              => true,
-            'show_in_menu'        => 'edit.php?post_type=wp_invoice',
+            'show_in_menu'        => true,
             'menu_position'       => 50,
             'menu_icon'           => 'dashicons-money',
             'supports'            => array( 'title', 'editor', 'author', 'custom-fields', 'thumbnail' ),

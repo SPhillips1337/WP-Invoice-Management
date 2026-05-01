@@ -18,6 +18,9 @@
                 <h1><a href="<?php echo esc_url( add_query_arg( 'invoice_dashboard', '1', home_url() ) ); ?>" class="logo-link">WP Invoices</a></h1>
             </div>
             <div class="header-right">
+                <button class="btn btn-secondary" id="settingsBtn" title="Settings">
+                    <span class="dashicons dashicons-admin-generic"></span>
+                </button>
                 <button class="btn btn-secondary" id="newInvoiceBtn">
                     <span class="dashicons dashicons-plus"></span>
                     New Invoice
@@ -202,11 +205,43 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Invoice Settings</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label>Currency Symbol</label>
+                    <input type="text" name="currency_symbol" value="" placeholder="$">
+                </div>
+                <div class="form-group">
+                    <label>Currency Code</label>
+                    <input type="text" name="currency_code" value="" placeholder="USD">
+                </div>
+                <div class="form-group">
+                    <label>Tax Label</label>
+                    <input type="text" name="tax_label" value="" placeholder="Tax">
+                </div>
+                <div class="form-group">
+                    <label>Default Country</label>
+                    <input type="text" name="default_country" value="" placeholder="United Kingdom">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
     const WP_INVOICE_API = {
         nonce: '<?php echo wp_create_nonce( 'wp_rest' ); ?>',
         root: '<?php echo rest_url( 'wp-invoice/v1' ); ?>',
-        ajaxUrl: '<?php echo admin_url( 'admin-ajax.php' ); ?>'
+        ajaxUrl: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
+        settings: <?php echo json_encode( \Wpim\Invoice\Admin\SettingsPage::get_settings() ); ?>
     };
     </script>
     <script src="<?php echo plugin_dir_url( dirname( __FILE__ ) ); ?>assets/js/invoice-editor.js?v=<?php echo WPIM_VERSION; ?>"></script>

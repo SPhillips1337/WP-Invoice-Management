@@ -57,7 +57,7 @@
                     '<td>' + item.date + '</td>' +
                     '<td>' + item.due_date + '</td>' +
                     '<td><span class="status-badge status-' + (item.status ? item.status.toLowerCase() : 'open') + '">' + (item.status || 'Open') + '</span></td>' +
-                    '<td class="text-right">$' + parseFloat(item.total).toFixed(2) + '</td>' +
+                    '<td class="text-right">' + wpInvoiceSettings.settings.currency_symbol + parseFloat(item.total).toFixed(2) + '</td>' +
                     '<td class="text-center">' +
                         '<a href="' + item.view_url + '" target="_blank" title="View PDF">📄</a> ' +
                         '<a href="' + item.edit_url + '" title="Edit">✏️</a>' +
@@ -219,8 +219,52 @@
             });
         }
 
-        // Initial Load
+        // Settings Modal
+        $('#wp-invoice-settings-trigger').on('click', function() {
+            var settings = wpInvoiceSettings.settings;
+            var $form = $('#wp-invoice-settings-form');
+            $form.find('[name="currency_symbol"]').val(settings.currency_symbol);
+            $form.find('[name="currency_code"]').val(settings.currency_code);
+            $form.find('[name="tax_label"]').val(settings.tax_label);
+            $form.find('[name="default_country"]').val(settings.default_country);
+            $('#wp-invoice-settings-modal').fadeIn();
+        });
+
+        $('.wp-invoice-modal-close').on('click', function() {
+            $('#wp-invoice-settings-modal').fadeOut();
+        });
+
+        $('#wp-invoice-settings-form').on('submit', function(e) {
+            e.preventDefault();
+            var $btn = $(this).find('button[type="submit"]');
+            var data = {
+                currency_symbol: $(this).find('[name="currency_symbol"]').val(),
+                currency_code: $(this).find('[name="currency_code"]').val(),
+                tax_label: $(this).find('[name="tax_label"]').val(),
+                default_country: $(this).find('[name="default_country"]').val()
+            };
+
+            $btn.prop('disabled', true).text('Saving...');
+
+            $.ajax({
+                url: wpInvoiceSettings.root + '/settings',
+                method: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-WP-Nonce', wpInvoiceSettings.nonce);
+                },
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Failed to save settings.');
+                    $btn.prop('disabled', false).text('Save Settings');
+                }
+            });
+        });
+
+        // Initialize
         loadInvoices();
     });
-
 })(jQuery);

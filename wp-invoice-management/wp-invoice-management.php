@@ -11,7 +11,7 @@
  * Domain Path: /languages
  */
 
-define( 'WPIM_VERSION', '0.3.2' );
+define( 'WPIM_VERSION', '0.3.5' );
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -23,6 +23,7 @@ require_once __DIR__ . '/src/CPT/Invoice.php';
 require_once __DIR__ . '/src/CPT/Customer.php';
 require_once __DIR__ . '/src/Lib/Importer.php';
 require_once __DIR__ . '/src/Admin/ImportPage.php';
+require_once __DIR__ . '/src/Admin/SettingsPage.php';
 require_once __DIR__ . '/src/API/REST_API.php';
 require_once __DIR__ . '/src/Plugin.php';
 

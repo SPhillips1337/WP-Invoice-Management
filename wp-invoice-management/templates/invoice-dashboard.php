@@ -15,6 +15,9 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                     <button id="wp-invoice-import-trigger" class="wp-invoice-btn wp-invoice-btn-secondary">
                         <span class="icon">📥</span> Import
                     </button>
+                    <button id="wp-invoice-settings-trigger" class="wp-invoice-btn wp-invoice-btn-secondary">
+                        <span class="icon">⚙️</span> Settings
+                    </button>
                     <input type="file" id="wp-invoice-csv-input" style="display:none;" accept=".csv" />
                     <a href="<?php echo esc_url( $editor_url ); ?>" class="wp-invoice-btn wp-invoice-btn-primary">
                         <span class="icon">＋</span> New Invoice
@@ -72,6 +75,39 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                 </div>
                 <p id="wp-invoice-progress-status">Uploading...</p>
                 <div id="wp-invoice-import-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="wp-invoice-settings-modal" class="wp-invoice-overlay" style="display:none;">
+        <div class="wp-invoice-modal">
+            <div class="wp-invoice-modal-header">
+                <h3>Invoice Settings</h3>
+                <button class="wp-invoice-modal-close" style="float:right; border:none; background:none; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div class="wp-invoice-modal-body" style="padding: 20px 0;">
+                <form id="wp-invoice-settings-form">
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Currency Symbol</label>
+                        <input type="text" name="currency_symbol" value="" placeholder="$" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Currency Code</label>
+                        <input type="text" name="currency_code" value="" placeholder="USD" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Tax Label</label>
+                        <input type="text" name="tax_label" value="" placeholder="Tax" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 25px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Default Country</label>
+                        <input type="text" name="default_country" value="" placeholder="United Kingdom" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="wp-invoice-btn wp-invoice-btn-primary" style="width:100%;">Save Settings</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

@@ -216,8 +216,8 @@
                         <td>Date</td>
                         <td>Description</td>
                         <td>Qty</td>
-                        <td>Rate</td>
-                        <td>Amount</td>
+                        <td>Rate (${WP_INVOICE_API.settings.currency_symbol})</td>
+                        <td>Amount (${WP_INVOICE_API.settings.currency_symbol})</td>
                         <td></td>
                     </tr>
                 `;
@@ -229,8 +229,8 @@
                             <td>Date</td>
                             <td>Description</td>
                             <td>Qty</td>
-                            <td>Rate</td>
-                            <td>Amount</td>
+                            <td>Rate (${WP_INVOICE_API.settings.currency_symbol})</td>
+                            <td>Amount (${WP_INVOICE_API.settings.currency_symbol})</td>
                             <td></td>
                         </tr>
                     `;
@@ -303,8 +303,8 @@
         
         const total = subtotal + tax - discount + shipping;
 
-        elements.subtotalDisplay.textContent = `$${subtotal.toFixed(2)}`;
-        elements.totalDisplay.textContent = `$${total.toFixed(2)}`;
+        elements.subtotalDisplay.textContent = `${WP_INVOICE_API.settings.currency_symbol}${subtotal.toFixed(2)}`;
+        elements.totalDisplay.textContent = `${WP_INVOICE_API.settings.currency_symbol}${total.toFixed(2)}`;
     }
 
     function getInvoiceData() {
@@ -555,6 +555,60 @@
                 pagination.page++;
                 loadInvoices();
             }
+        });
+    }
+
+    // Settings Logic
+    if (elements.settingsBtn) {
+        elements.settingsBtn.addEventListener('click', () => {
+            const settings = WP_INVOICE_API.settings;
+            elements.settingsForm.querySelector('[name="currency_symbol"]').value = settings.currency_symbol;
+            elements.settingsForm.querySelector('[name="currency_code"]').value = settings.currency_code;
+            elements.settingsForm.querySelector('[name="tax_label"]').value = settings.tax_label;
+            elements.settingsForm.querySelector('[name="default_country"]').value = settings.default_country;
+            elements.settingsModal.classList.add('active');
+        });
+
+        elements.closeSettingsModal.addEventListener('click', () => {
+            elements.settingsModal.classList.remove('active');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === elements.settingsModal) {
+                elements.settingsModal.classList.remove('active');
+            }
+        });
+
+        elements.settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = elements.settingsForm.querySelector('button[type="submit"]');
+            const data = {
+                currency_symbol: elements.settingsForm.querySelector('[name="currency_symbol"]').value,
+                currency_code: elements.settingsForm.querySelector('[name="currency_code"]').value,
+                tax_label: elements.settingsForm.querySelector('[name="tax_label"]').value,
+                default_country: elements.settingsForm.querySelector('[name="default_country"]').value
+            };
+
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            fetch(`${WP_INVOICE_API.root}/settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': WP_INVOICE_API.nonce
+                },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(settings => {
+                location.reload();
+            })
+            .catch(err => {
+                alert('Failed to save settings');
+                btn.disabled = false;
+                btn.textContent = 'Save Settings';
+            });
         });
     }
 

@@ -719,6 +719,48 @@
     gap: 8px;
 }
 
+#settingsForm .form-group {
+    margin-bottom: 16px;
+}
+
+#settingsForm label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+#settingsForm input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+}
+
+#settingsForm .modal-actions {
+    margin-top: 24px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-modal {
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.close-modal:hover {
+    color: var(--text-primary);
+}
+
 .saving-indicator {
     display: inline-block;
     margin-left: 8px;

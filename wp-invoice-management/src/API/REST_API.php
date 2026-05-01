@@ -69,6 +69,46 @@ class REST_API {
                 'permission_callback' => array( $this, 'check_permission' ),
             ),
         ) );
+
+        register_rest_route( 'wp-invoice/v1', '/settings', array(
+            array(
+                'methods'  => 'GET',
+                'callback' => array( $this, 'get_settings' ),
+                'permission_callback' => array( $this, 'check_permission' ),
+            ),
+            array(
+                'methods'  => 'POST',
+                'callback' => array( $this, 'update_settings' ),
+                'permission_callback' => array( $this, 'check_admin_permission' ),
+            ),
+        ) );
+    }
+
+    public function check_admin_permission() {
+        return current_user_can( 'manage_options' );
+    }
+
+    public function get_settings() {
+        return \Wpim\Invoice\Admin\SettingsPage::get_settings();
+    }
+
+    public function update_settings( $request ) {
+        $settings = $request->get_json_params();
+        if ( ! $settings ) {
+            return new \WP_Error( 'invalid_data', 'No data provided', array( 'status' => 400 ) );
+        }
+
+        $allowed_fields = array( 'currency_symbol', 'currency_code', 'tax_label', 'default_country' );
+        $current_settings = \Wpim\Invoice\Admin\SettingsPage::get_settings();
+        
+        foreach ( $allowed_fields as $field ) {
+            if ( isset( $settings[ $field ] ) ) {
+                $current_settings[ $field ] = sanitize_text_field( $settings[ $field ] );
+            }
+        }
+
+        update_option( 'wp_invoice_settings', $current_settings );
+        return $current_settings;
     }
 
     public function check_permission() {

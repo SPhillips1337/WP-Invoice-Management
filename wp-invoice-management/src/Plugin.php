@@ -25,6 +25,8 @@ class Plugin {
     }
 
     private function init_hooks() {
+        new \Wpim\Invoice\Admin\ImportPage();
+        new \Wpim\Invoice\Admin\SettingsPage();
         add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
         add_action( 'template_redirect', array( $this, 'handle_invoice_template' ) );
         add_shortcode( 'invoice_editor', array( $this, 'render_frontend_editor' ) );
@@ -35,6 +37,15 @@ class Plugin {
         // Page Templates
         add_filter( 'theme_templates', array( $this, 'register_page_templates' ), 10, 4 );
         add_filter( 'template_include', array( $this, 'load_page_templates' ) );
+
+        // Add settings link to plugin actions
+        add_filter( 'plugin_action_links_' . plugin_basename( dirname( __DIR__ ) . '/wp-invoice-management.php' ), array( $this, 'add_plugin_action_links' ) );
+    }
+
+    public function add_plugin_action_links( $links ) {
+        $settings_link = '<a href="edit.php?post_type=wp_invoice&page=wp-invoice-settings">' . __( 'Settings', 'wp-invoice-management' ) . '</a>';
+        array_unshift( $links, $settings_link );
+        return $links;
     }
 
     public function handle_invoice_template() {
@@ -193,6 +204,9 @@ class Plugin {
         if ( ! is_array( $items ) ) {
             $items = array();
         }
+        $settings = \Wpim\Invoice\Admin\SettingsPage::get_settings();
+        $currency = $settings['currency_symbol'];
+        $tax_label = $settings['tax_label'];
         ?>
 <!DOCTYPE html>
 <html>
@@ -345,8 +359,8 @@ class Plugin {
                         <td style="font-size: 12px; color: #666;"><?php echo esc_html( $item['date'] ?? '' ); ?></td>
                         <td><?php echo esc_html( $item['description'] ); ?></td>
                         <td><?php echo esc_html( $item['quantity'] ); ?></td>
-                        <td>$<?php echo number_format( floatval( $item['rate'] ), 2 ); ?></td>
-                        <td>$<?php echo number_format( floatval( $item['amount'] ), 2 ); ?></td>
+                        <td><?php echo $currency . number_format( floatval( $item['rate'] ), 2 ); ?></td>
+                        <td><?php echo $currency . number_format( floatval( $item['amount'] ), 2 ); ?></td>
                     </tr>
                 <?php endif; ?>
             <?php endforeach; ?>
@@ -357,35 +371,35 @@ class Plugin {
         <table>
             <tr>
                 <th>Subtotal:</th>
-                <td>$<?php echo number_format( $subtotal ?: 0, 2 ); ?></td>
+                <td><?php echo $currency . number_format( $subtotal ?: 0, 2 ); ?></td>
             </tr>
             <?php if ( $tax ) : ?>
             <tr>
-                <th>Tax:</th>
-                <td>$<?php echo number_format( $tax, 2 ); ?></td>
+                <th><?php echo esc_html( $tax_label ); ?>:</th>
+                <td><?php echo $currency . number_format( $tax, 2 ); ?></td>
             </tr>
             <?php endif; ?>
             <?php if ( $discount ) : ?>
             <tr>
                 <th>Discount:</th>
-                <td>-$<?php echo number_format( $discount, 2 ); ?></td>
+                <td>-<?php echo $currency . number_format( $discount, 2 ); ?></td>
             </tr>
             <?php endif; ?>
             <?php if ( $shipping ) : ?>
             <tr>
                 <th>Shipping:</th>
-                <td>$<?php echo number_format( $shipping, 2 ); ?></td>
+                <td><?php echo $currency . number_format( $shipping, 2 ); ?></td>
             </tr>
             <?php endif; ?>
             <?php if ( $amount_paid ) : ?>
             <tr>
                 <th>Amount Paid:</th>
-                <td>-$<?php echo number_format( $amount_paid, 2 ); ?></td>
+                <td>-<?php echo $currency . number_format( $amount_paid, 2 ); ?></td>
             </tr>
             <?php endif; ?>
             <tr class="total-row">
                 <th>Total:</th>
-                <td>$<?php echo number_format( $total ?: 0, 2 ); ?></td>
+                <td><?php echo $currency . number_format( $total ?: 0, 2 ); ?></td>
             </tr>
         </table>
     </div>
@@ -409,24 +423,6 @@ class Plugin {
     }
 
     public function add_admin_menu() {
-        add_menu_page(
-            __( 'Invoices', 'wp-invoice-management' ),
-            __( 'Invoices', 'wp-invoice-management' ),
-            'edit_posts',
-            'edit.php?post_type=wp_invoice',
-            '',
-            'dashicons-money',
-            50
-        );
-
-        add_submenu_page(
-            'edit.php?post_type=wp_invoice',
-            __( 'Add New Invoice', 'wp-invoice-management' ),
-            __( 'Add New', 'wp-invoice-management' ),
-            'edit_posts',
-            'post-new.php?post_type=wp_invoice'
-        );
-
         add_submenu_page(
             'edit.php?post_type=wp_invoice',
             __( 'Import Invoices', 'wp-invoice-management' ),
@@ -451,6 +447,16 @@ class Plugin {
             array( 'jquery' ),
             WPIM_VERSION,
             true
+        );
+
+        wp_localize_script(
+            'wp-invoice-dashboard',
+            'wpInvoiceSettings',
+            array(
+                'root'     => esc_url_raw( rest_url( 'wp-invoice/v1' ) ),
+                'nonce'    => wp_create_nonce( 'wp_rest' ),
+                'settings' => \Wpim\Invoice\Admin\SettingsPage::get_settings(),
+            )
         );
 
         wp_localize_script(
