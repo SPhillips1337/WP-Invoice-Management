@@ -271,9 +271,11 @@ class REST_API {
             $customers[] = array(
                 'id'       => $post->ID,
                 'title'    => $post->post_title,
+                'name'     => get_post_meta( $post->ID, '_customer_name', true ),
                 'company'  => get_post_meta( $post->ID, '_customer_company', true ),
                 'email'    => get_post_meta( $post->ID, '_customer_email', true ),
                 'phone'    => get_post_meta( $post->ID, '_customer_phone', true ),
+                'url'      => get_post_meta( $post->ID, '_customer_url', true ),
                 'address'  => get_post_meta( $post->ID, '_customer_address', true ),
             );
         }

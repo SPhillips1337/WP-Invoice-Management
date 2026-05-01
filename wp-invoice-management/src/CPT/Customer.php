@@ -67,8 +67,14 @@ class Customer {
         $email      = get_post_meta( $post->ID, '_customer_email', true );
         $phone      = get_post_meta( $post->ID, '_customer_phone', true );
         $company    = get_post_meta( $post->ID, '_customer_company', true );
+        $name       = get_post_meta( $post->ID, '_customer_name', true );
+        $url        = get_post_meta( $post->ID, '_customer_url', true );
         ?>
         <table class="form-table">
+            <tr>
+                <th><label for="customer_name"><?php _e( 'Customer Name', 'wp-invoice-management' ); ?></label></th>
+                <td><input type="text" id="customer_name" name="customer_name" value="<?php echo esc_attr( $name ); ?>" class="regular-text" placeholder="e.g. John Doe" /></td>
+            </tr>
             <tr>
                 <th><label for="customer_company"><?php _e( 'Company Name', 'wp-invoice-management' ); ?></label></th>
                 <td><input type="text" id="customer_company" name="customer_company" value="<?php echo esc_attr( $company ); ?>" class="regular-text" /></td>
@@ -80,6 +86,10 @@ class Customer {
             <tr>
                 <th><label for="customer_phone"><?php _e( 'Phone', 'wp-invoice-management' ); ?></label></th>
                 <td><input type="tel" id="customer_phone" name="customer_phone" value="<?php echo esc_attr( $phone ); ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <th><label for="customer_url"><?php _e( 'Website URL', 'wp-invoice-management' ); ?></label></th>
+                <td><input type="url" id="customer_url" name="customer_url" value="<?php echo esc_url( $url ); ?>" class="regular-text" placeholder="https://example.com" /></td>
             </tr>
             <tr>
                 <th><label for="customer_address"><?php _e( 'Address', 'wp-invoice-management' ); ?></label></th>
@@ -103,9 +113,11 @@ class Customer {
         }
 
         $meta_fields = array(
+            'customer_name',
             'customer_company',
             'customer_email',
             'customer_phone',
+            'customer_url',
             'customer_address',
         );
 
