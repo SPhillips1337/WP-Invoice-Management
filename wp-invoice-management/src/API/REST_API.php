@@ -6,6 +6,51 @@ class REST_API {
         add_action( 'rest_api_init', array( $this, 'register_routes' ) );
     }
 
+    /**
+     * JSON Schema args for invoice write endpoints (POST create / PUT update).
+     * WordPress validates these before the callback runs.
+     */
+    private function invoice_write_args() {
+        return array(
+            'title'       => array(
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'status'      => array(
+                'type' => 'string',
+                'enum' => array( 'open', 'paid', 'overdue', 'draft' ),
+            ),
+            'date'        => array( 'type' => 'string' ),
+            'due_date'    => array( 'type' => 'string' ),
+            'po_number'   => array( 'type' => 'string' ),
+            'from'        => array( 'type' => 'string' ),
+            'to'          => array( 'type' => 'string' ),
+            'ship_to'     => array( 'type' => 'string' ),
+            'notes'       => array( 'type' => 'string' ),
+            'terms'       => array( 'type' => 'string' ),
+            'tax'         => array( 'type' => 'number' ),
+            'discount'    => array( 'type' => 'number' ),
+            'shipping'    => array( 'type' => 'number' ),
+            'amount_paid' => array( 'type' => 'number' ),
+            'items'       => array(
+                'type'  => 'array',
+                'items' => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'description' => array( 'type' => 'string' ),
+                        'type'        => array(
+                            'type' => 'string',
+                            'enum' => array( 'item', 'section' ),
+                        ),
+                        'quantity'    => array( 'type' => 'number' ),
+                        'rate'        => array( 'type' => 'number' ),
+                        'date'        => array( 'type' => 'string' ),
+                    ),
+                ),
+            ),
+        );
+    }
+
     public function register_routes() {
         register_rest_route( 'wp-invoice/v1', '/invoices', array(
             array(
@@ -14,9 +59,10 @@ class REST_API {
                 'permission_callback' => array( $this, 'check_permission' ),
             ),
             array(
-                'methods'  => 'POST',
-                'callback' => array( $this, 'create_invoice' ),
+                'methods'             => 'POST',
+                'callback'            => array( $this, 'create_invoice' ),
                 'permission_callback' => array( $this, 'check_permission' ),
+                'args'                => $this->invoice_write_args(),
             ),
         ) );
 
@@ -27,9 +73,10 @@ class REST_API {
                 'permission_callback' => array( $this, 'check_permission' ),
             ),
             array(
-                'methods'  => 'PUT',
-                'callback' => array( $this, 'update_invoice' ),
+                'methods'             => 'PUT',
+                'callback'            => array( $this, 'update_invoice' ),
                 'permission_callback' => array( $this, 'check_permission' ),
+                'args'                => $this->invoice_write_args(),
             ),
             array(
                 'methods'  => 'DELETE',
@@ -138,17 +185,21 @@ class REST_API {
     }
 
     public function get_invoices( $request ) {
-        $per_page = $request->get_param( 'per_page' ) ?: 10;
-        $page     = $request->get_param( 'page' ) ?: 1;
-        $search   = $request->get_param( 'search' );
-        $orderby  = $request->get_param( 'orderby' ) ?: 'date';
-        $order    = $request->get_param( 'order' ) ?: 'DESC';
+        $per_page = absint( $request->get_param( 'per_page' ) ?: 10 );
+        $page     = absint( $request->get_param( 'page' ) ?: 1 );
+        $search   = sanitize_text_field( $request->get_param( 'search' ) ?? '' );
+        $order    = strtoupper( $request->get_param( 'order' ) ) === 'ASC' ? 'ASC' : 'DESC';
+
+        // Allowlist orderby values to prevent arbitrary meta key injection.
+        $allowed_orderby = array( 'date', 'due_date', 'total', 'title' );
+        $orderby         = in_array( $request->get_param( 'orderby' ), $allowed_orderby, true )
+            ? $request->get_param( 'orderby' )
+            : 'date';
 
         $args = array(
             'post_type'      => 'wp_invoice',
             'posts_per_page' => $per_page,
             'paged'          => $page,
-            'orderby'        => $orderby,
             'order'          => $order,
             's'              => $search,
             'post_status'    => 'publish',
@@ -269,8 +320,15 @@ class REST_API {
             return new \WP_Error( 'forbidden', 'You do not have permission to edit this invoice', array( 'status' => 403 ) );
         }
 
-        $data = $request->get_json_params();
-        update_post_meta( $post_id, '_invoice_status', sanitize_text_field( $data['status'] ) );
+        $data   = $request->get_json_params();
+        $status = isset( $data['status'] ) ? sanitize_text_field( $data['status'] ) : '';
+
+        $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft' );
+        if ( ! in_array( $status, $allowed_statuses, true ) ) {
+            return new \WP_Error( 'invalid_status', 'Invalid status value', array( 'status' => 400 ) );
+        }
+
+        update_post_meta( $post_id, '_invoice_status', $status );
 
         return rest_ensure_response( $this->prepare_invoice( get_post( $post_id ) ) );
     }
@@ -406,10 +464,13 @@ class REST_API {
                 $value = $data[ $data_key ];
                 
                 // Use appropriate sanitization based on field type
-                if ( in_array( $data_key, array( 'from', 'to', 'ship_to', 'notes', 'terms' ) ) ) {
+                if ( in_array( $data_key, array( 'from', 'to', 'ship_to', 'notes', 'terms' ), true ) ) {
                     $value = sanitize_textarea_field( $value );
-                } elseif ( in_array( $data_key, array( 'tax', 'discount', 'shipping', 'amount_paid' ) ) ) {
+                } elseif ( in_array( $data_key, array( 'tax', 'discount', 'shipping', 'amount_paid' ), true ) ) {
                     $value = floatval( $value );
+                } elseif ( $data_key === 'status' ) {
+                    $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft' );
+                    $value = in_array( $value, $allowed_statuses, true ) ? $value : 'open';
                 } else {
                     $value = sanitize_text_field( $value );
                 }
@@ -421,15 +482,29 @@ class REST_API {
         if ( isset( $data['items'] ) && is_array( $data['items'] ) ) {
             $items = array();
             foreach ( $data['items'] as $item ) {
+                // Only process items that are actual arrays to prevent type confusion.
+                if ( ! is_array( $item ) ) {
+                    continue;
+                }
                 if ( ! empty( $item['description'] ) ) {
-                    $items[] = array(
+                    $type = isset( $item['type'] ) && $item['type'] === 'section' ? 'section' : 'item';
+
+                    // Whitelist-only keys — never persist unexpected fields.
+                    $sanitized_item = array(
                         'description' => sanitize_textarea_field( $item['description'] ),
-                        'quantity'    => isset( $item['quantity'] ) ? floatval( $item['quantity'] ) : 0,
-                        'rate'        => isset( $item['rate'] ) ? floatval( $item['rate'] ) : 0,
-                        'amount'      => ( isset( $item['quantity'] ) && isset( $item['rate'] ) ) ? ( floatval( $item['quantity'] ) * floatval( $item['rate'] ) ) : 0,
-                        'date'        => isset( $item['date'] ) ? sanitize_text_field( $item['date'] ) : '',
-                        'type'        => isset( $item['type'] ) ? sanitize_text_field( $item['type'] ) : 'item',
+                        'type'        => $type,
                     );
+
+                    if ( $type === 'item' ) {
+                        $qty    = isset( $item['quantity'] ) ? floatval( $item['quantity'] ) : 0;
+                        $rate   = isset( $item['rate'] ) ? floatval( $item['rate'] ) : 0;
+                        $sanitized_item['quantity'] = $qty;
+                        $sanitized_item['rate']     = $rate;
+                        $sanitized_item['amount']   = $qty * $rate;
+                        $sanitized_item['date']     = isset( $item['date'] ) ? sanitize_text_field( $item['date'] ) : '';
+                    }
+
+                    $items[] = $sanitized_item;
                 }
             }
             update_post_meta( $post_id, '_invoice_items', $items );
@@ -471,18 +546,38 @@ class REST_API {
     }
 
     public function get_customer( $request ) {
-        $id = $request['id'];
+        $id   = (int) $request['id'];
+        $post = get_post( $id );
+
+        if ( ! $post || $post->post_type !== 'wp_customer' ) {
+            return new \WP_Error( 'not_found', 'Customer not found', array( 'status' => 404 ) );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) && (int) $post->post_author !== get_current_user_id() ) {
+            return new \WP_Error( 'forbidden', 'You do not have permission to view this customer', array( 'status' => 403 ) );
+        }
+
         return rest_ensure_response( $this->get_customer_data( $id ) );
     }
 
     public function update_customer( $request ) {
-        $id = $request['id'];
+        $id   = (int) $request['id'];
+        $post = get_post( $id );
+
+        if ( ! $post || $post->post_type !== 'wp_customer' ) {
+            return new \WP_Error( 'not_found', 'Customer not found', array( 'status' => 404 ) );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) && (int) $post->post_author !== get_current_user_id() ) {
+            return new \WP_Error( 'forbidden', 'You do not have permission to edit this customer', array( 'status' => 403 ) );
+        }
+
         $data = $request->get_json_params();
 
         if ( ! empty( $data['name'] ) ) {
             wp_update_post( array(
                 'ID'         => $id,
-                'post_title' => $data['name'],
+                'post_title' => sanitize_text_field( $data['name'] ),
             ) );
         }
 
@@ -503,7 +598,16 @@ class REST_API {
 
         foreach ( $fields as $key => $meta_key ) {
             if ( isset( $data[ $key ] ) ) {
-                update_post_meta( $customer_id, $meta_key, sanitize_text_field( $data[ $key ] ) );
+                if ( $key === 'address' ) {
+                    $value = sanitize_textarea_field( $data[ $key ] );
+                } elseif ( $key === 'url' ) {
+                    $value = esc_url_raw( $data[ $key ] );
+                } elseif ( $key === 'email' ) {
+                    $value = sanitize_email( $data[ $key ] );
+                } else {
+                    $value = sanitize_text_field( $data[ $key ] );
+                }
+                update_post_meta( $customer_id, $meta_key, $value );
             }
         }
     }

@@ -151,26 +151,35 @@ class Plugin {
             wp_die( 'Invoice not found' );
         }
 
-        // Check permissions - anyone who can read can download their own invoices
-        if ( ! current_user_can( 'read_post', $post->ID ) ) {
-            wp_die( 'Permission denied' );
+        // Check permissions: admins can download any invoice; other users only their own.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            if ( ! is_user_logged_in() ) {
+                wp_die( 'Permission denied' );
+            }
+            if ( (int) $post->post_author !== get_current_user_id() ) {
+                wp_die( 'Permission denied' );
+            }
         }
 
-        ob_start();
-        $this->render_pdf_template( $post );
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>@page { size: A4; margin: 20mm; }</style></head><body>' . ob_get_clean() . '</body></html>';
+        try {
+            ob_start();
+            $this->render_pdf_template( $post );
+            $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>@page { size: A4; margin: 20mm; }</style></head><body>' . ob_get_clean() . '</body></html>';
 
-        $options = new \Dompdf\Options();
-        $options->set( 'isRemoteEnabled', true );
-        $options->set( 'defaultFont', 'Helvetica' );
+            $options = new \Dompdf\Options();
+            $options->set( 'isRemoteEnabled', true );
+            $options->set( 'defaultFont', 'Helvetica' );
 
-        $dompdf = new \Dompdf\Dompdf( $options );
-        $dompdf->loadHtml( $html );
-        $dompdf->setPaper( 'A4', 'portrait' );
-        $dompdf->render();
+            $dompdf = new \Dompdf\Dompdf( $options );
+            $dompdf->loadHtml( $html );
+            $dompdf->setPaper( 'A4', 'portrait' );
+            $dompdf->render();
 
-        // Fix encoding
-        $dompdf->stream( 'invoice-' . $invoice_id . '.pdf', array( 'Attachment' => true ) );
+            $dompdf->stream( 'invoice-' . $invoice_id . '.pdf', array( 'Attachment' => true ) );
+        } catch ( \Exception $e ) {
+            error_log( 'WP Invoice PDF Generation Error (ID: ' . $invoice_id . '): ' . $e->getMessage() );
+            wp_die( 'An error occurred while generating the PDF. Please try again or contact support.' );
+        }
         exit;
     }
 
