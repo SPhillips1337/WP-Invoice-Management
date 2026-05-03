@@ -5,6 +5,40 @@ class SettingsPage {
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
+        add_action( 'admin_init', array( $this, 'handle_reset' ) );
+    }
+
+    public function handle_reset() {
+        if ( isset( $_POST['wp_invoice_reset'] ) && current_user_can( 'manage_options' ) ) {
+            if ( ! isset( $_POST['confirm_reset'] ) || $_POST['confirm_reset'] !== '1' ) {
+                wp_die( __( 'You must confirm the reset by checking the checkbox.', 'wp-invoice-management' ) );
+            }
+
+            // Delete all invoices
+            $invoices = get_posts( array(
+                'post_type'      => 'wp_invoice',
+                'post_status'    => 'any',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+            ) );
+            foreach ( $invoices as $post_id ) {
+                wp_delete_post( $post_id, true );
+            }
+
+            // Delete all customers
+            $customers = get_posts( array(
+                'post_type'      => 'wp_customer',
+                'post_status'    => 'any',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+            ) );
+            foreach ( $customers as $post_id ) {
+                wp_delete_post( $post_id, true );
+            }
+
+            wp_redirect( admin_url( 'edit.php?post_type=wp_invoice&page=wp-invoice-settings&reset=success' ) );
+            exit;
+        }
     }
 
     public function add_settings_page() {
@@ -72,6 +106,34 @@ class SettingsPage {
             'wp_invoice_general_section',
             array( 'label_for' => 'default_address', 'default' => '' )
         );
+
+        add_settings_section(
+            'wp_invoice_reset_section',
+            __( 'Reset Data', 'wp-invoice-management' ),
+            array( $this, 'render_reset_section_description' ),
+            'wp-invoice-settings'
+        );
+
+        add_settings_field(
+            'reset_data',
+            __( 'Reset All Data', 'wp-invoice-management' ),
+            array( $this, 'render_reset_field' ),
+            'wp-invoice-settings',
+            'wp_invoice_reset_section'
+        );
+    }
+
+    public function render_reset_section_description() {
+        echo '<p>' . __( 'Danger zone: Permanently delete all invoices and customers. This action cannot be undone.', 'wp-invoice-management' ) . '</p>';
+    }
+
+    public function render_reset_field() {
+        ?>
+        <input type="checkbox" id="confirm_reset" name="confirm_reset" value="1" />
+        <label for="confirm_reset"><?php _e( 'I understand this will delete ALL invoices and customers', 'wp-invoice-management' ); ?></label>
+        <br><br>
+        <input type="submit" name="wp_invoice_reset" class="button button-danger" style="background:#dc3232; color:#fff; border-color:#a00;" value="<?php esc_attr_e( 'Reset All Data', 'wp-invoice-management' ); ?>" onclick="return confirm('<?php echo esc_js( __( 'Are you absolutely sure? This will delete ALL invoices and customers permanently.', 'wp-invoice-management' ) ); ?>');" />
+        <?php
     }
 
     public function render_text_field( $args ) {

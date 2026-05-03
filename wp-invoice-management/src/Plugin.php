@@ -21,6 +21,7 @@ class Plugin {
         new CPT\Invoice();
         new CPT\Customer();
         new API\REST_API();
+        new API\BackupRestAPI();
         new Admin\ImportPage();
     }
 
@@ -439,6 +440,14 @@ class Plugin {
             'edit_posts',
             'wp-invoice-import',
             array( new Admin\ImportPage(), 'render' )
+        );
+        add_submenu_page(
+            'edit.php?post_type=wp_invoice',
+            __( 'Backup & Restore', 'wp-invoice-management' ),
+            __( 'Backup & Restore', 'wp-invoice-management' ),
+            'manage_options',
+            'wp-invoice-backup',
+            array( new Admin\BackupPage(), 'render' )
         );
     }
 

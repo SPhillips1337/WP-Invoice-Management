@@ -25,6 +25,10 @@ require_once __DIR__ . '/src/Lib/Importer.php';
 require_once __DIR__ . '/src/Admin/ImportPage.php';
 require_once __DIR__ . '/src/Admin/SettingsPage.php';
 require_once __DIR__ . '/src/API/REST_API.php';
+require_once __DIR__ . '/src/API/BackupRestAPI.php';
+require_once __DIR__ . '/src/Lib/BackupExporter.php';
+require_once __DIR__ . '/src/Lib/BackupImporter.php';
+require_once __DIR__ . '/src/Admin/BackupPage.php';
 require_once __DIR__ . '/src/Plugin.php';
 
 use Wpim\Invoice\Plugin;
