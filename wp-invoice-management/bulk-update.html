@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulk Update Invoices</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .button { padding: 10px 20px; background: #0073aa; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        .button:hover { background: #005a87; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Bulk Update Invoices to Paid</h1>
+    <p>This will update all invoices with date prior to invoice #68 (ID 173) to "paid" status.</p>
+    <button class="button" onclick="bulkUpdate()">Update Invoices</button>
+    <div id="result"></div>
+
+    <script>
+        function bulkUpdate() {
+            if (!confirm('Are you sure you want to update invoices prior to #68 (ID 173) to paid status?')) {
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Updating...';
+            resultDiv.className = '';
+
+            fetch('/wp-json/wp-invoice/v1/invoices/bulk-update-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': wpData?.nonce || ''
+                },
+                body: JSON.stringify({
+                    before_invoice_id: 173,
+                    status: 'paid'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code) {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = 'Error: ' + data.message;
+                } else {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = '<strong>Success!</strong><br>' + data.message;
+                }
+            })
+            .catch(error => {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = 'Error: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>

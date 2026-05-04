@@ -322,7 +322,7 @@ class BackupImporter {
 
         // -- Status (validated against allowed list) --------------------------
         if ( isset( $meta_data['_invoice_status'] ) ) {
-            $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft' );
+            $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft', 'sent' );
             $status           = sanitize_text_field( $meta_data['_invoice_status'] );
             if ( ! in_array( $status, $allowed_statuses, true ) ) {
                 $status = 'open';

@@ -1,6 +1,11 @@
 (function() {
     'use strict';
 
+    function autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
     let currentInvoiceId = null;
     let invoices = [];
     let customers = [];
@@ -235,17 +240,17 @@
                 html += `
                     <tr data-index="${index}" class="project-header-row" data-type="section">
                         <td colspan="5">
-                            <input type="text" class="item-description project-header-input" value="${escapeHtml(item.description)}" placeholder="Project Name (e.g. Website Redesign)">
+                            <textarea class="item-description project-header-input" rows="1" placeholder="Project Name (e.g. Website Redesign)">${escapeHtml(item.description)}</textarea>
                         </td>
                         <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
                     </tr>
                     <tr class="line-item-header-row">
-                        <td>Date</td>
-                        <td>Description</td>
-                        <td>Qty</td>
-                        <td>Rate (${WP_INVOICE_API.settings.currency_symbol})</td>
-                        <td>Amount (${WP_INVOICE_API.settings.currency_symbol})</td>
-                        <td></td>
+                        <td class="col-date">Date</td>
+                        <td class="col-description">Description</td>
+                        <td class="col-qty">Qty</td>
+                        <td class="col-rate">Rate (${WP_INVOICE_API.settings.currency_symbol})</td>
+                        <td class="col-amount">Amount (${WP_INVOICE_API.settings.currency_symbol})</td>
+                        <td class="col-actions"></td>
                     </tr>
                 `;
             } else {
@@ -253,23 +258,23 @@
                 if (index === 0) {
                     html += `
                         <tr class="line-item-header-row">
-                            <td>Date</td>
-                            <td>Description</td>
-                            <td>Qty</td>
-                            <td>Rate (${WP_INVOICE_API.settings.currency_symbol})</td>
-                            <td>Amount (${WP_INVOICE_API.settings.currency_symbol})</td>
-                            <td></td>
+                            <td class="col-date">Date</td>
+                            <td class="col-description">Description</td>
+                            <td class="col-qty">Qty</td>
+                            <td class="col-rate">Rate (${WP_INVOICE_API.settings.currency_symbol})</td>
+                            <td class="col-amount">Amount (${WP_INVOICE_API.settings.currency_symbol})</td>
+                            <td class="col-actions"></td>
                         </tr>
                     `;
                 }
                 html += `
                     <tr data-index="${index}" data-type="item">
-                        <td><input type="text" class="item-date" value="${item.date || ''}" placeholder="DD/MM/YY"></td>
-                        <td><input type="text" class="item-description" value="${escapeHtml(item.description)}" placeholder="Item description"></td>
-                        <td><input type="number" class="item-quantity" value="${item.quantity}" min="0" step="1"></td>
-                        <td><input type="number" class="item-rate" value="${item.rate}" min="0" step="0.01"></td>
-                        <td><input type="number" class="item-amount" value="${item.amount || 0}" readonly></td>
-                        <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
+                        <td class="col-date"><input type="text" class="item-date" value="${item.date || ''}" placeholder="DD/MM/YY"></td>
+                        <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description">${escapeHtml(item.description)}</textarea></td>
+                        <td class="col-qty"><input type="number" class="item-quantity" value="${item.quantity}" min="0" step="1"></td>
+                        <td class="col-rate"><input type="number" class="item-rate" value="${item.rate}" min="0" step="0.01"></td>
+                        <td class="col-amount"><input type="number" class="item-amount" value="${item.amount || 0}" readonly></td>
+                        <td class="col-actions"><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
                     </tr>
                 `;
             }
@@ -277,6 +282,10 @@
 
         elements.lineItemsBody.innerHTML = html;
         attachLineItemListeners();
+
+        elements.lineItemsBody.querySelectorAll('textarea.item-description').forEach(textarea => {
+            autoResizeTextarea(textarea);
+        });
     }
 
     function attachLineItemListeners() {
@@ -287,6 +296,7 @@
                 const quantityInput = row.querySelector('.item-quantity');
                 const rateInput = row.querySelector('.item-rate');
                 const amountInput = row.querySelector('.item-amount');
+                const descriptionTextarea = row.querySelector('.item-description');
 
                 const updateAmount = () => {
                     const quantity = parseFloat(quantityInput.value) || 0;
@@ -297,6 +307,17 @@
 
                 quantityInput.addEventListener('input', updateAmount);
                 rateInput.addEventListener('input', updateAmount);
+
+                if (descriptionTextarea) {
+                    autoResizeTextarea(descriptionTextarea);
+                    descriptionTextarea.addEventListener('input', () => autoResizeTextarea(descriptionTextarea));
+                }
+            } else {
+                const descriptionTextarea = row.querySelector('.item-description');
+                if (descriptionTextarea) {
+                    autoResizeTextarea(descriptionTextarea);
+                    descriptionTextarea.addEventListener('input', () => autoResizeTextarea(descriptionTextarea));
+                }
             }
 
             row.querySelector('.remove-item-btn').addEventListener('click', () => {

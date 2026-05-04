@@ -18,7 +18,7 @@ class REST_API {
             ),
             'status'      => array(
                 'type' => 'string',
-                'enum' => array( 'open', 'paid', 'overdue', 'draft' ),
+                'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent' ),
             ),
             'date'        => array( 'type' => 'string' ),
             'due_date'    => array( 'type' => 'string' ),
@@ -145,6 +145,22 @@ class REST_API {
                 'methods'  => 'POST',
                 'callback' => array( $this, 'update_settings' ),
                 'permission_callback' => array( $this, 'check_admin_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'wp-invoice/v1', '/invoices/bulk-update-status', array(
+            array(
+                'methods'  => 'POST',
+                'callback' => array( $this, 'bulk_update_status' ),
+                'permission_callback' => array( $this, 'check_admin_permission' ),
+                'args'     => array(
+                    'before_invoice_id' => array( 'type' => 'integer', 'required' => true ),
+                    'status'            => array(
+                        'type' => 'string',
+                        'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent' ),
+                        'required' => true,
+                    ),
+                ),
             ),
         ) );
     }
@@ -323,7 +339,7 @@ class REST_API {
         $data   = $request->get_json_params();
         $status = isset( $data['status'] ) ? sanitize_text_field( $data['status'] ) : '';
 
-        $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft' );
+        $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft', 'sent' );
         if ( ! in_array( $status, $allowed_statuses, true ) ) {
             return new \WP_Error( 'invalid_status', 'Invalid status value', array( 'status' => 400 ) );
         }
@@ -331,6 +347,52 @@ class REST_API {
         update_post_meta( $post_id, '_invoice_status', $status );
 
         return rest_ensure_response( $this->prepare_invoice( get_post( $post_id ) ) );
+    }
+
+    public function bulk_update_status( $request ) {
+        $before_invoice_id = $request->get_param( 'before_invoice_id' );
+        $status            = sanitize_text_field( $request->get_param( 'status' ) );
+
+        // Get the date of the reference invoice
+        $ref_date = get_post_meta( $before_invoice_id, '_invoice_date', true );
+        if ( ! $ref_date ) {
+            return new \WP_Error( 'invalid_invoice', 'Could not find reference invoice date', array( 'status' => 400 ) );
+        }
+
+        // Query invoices with date < ref_date
+        $args = array(
+            'post_type'      => 'wp_invoice',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_invoice_date',
+                    'value'   => $ref_date,
+                    'compare' => '<',
+                    'type'    => 'DATE',
+                ),
+            ),
+        );
+
+        $query    = new \WP_Query( $args );
+        $updated  = 0;
+        $skipped  = 0;
+
+        foreach ( $query->posts as $post ) {
+            $current = get_post_meta( $post->ID, '_invoice_status', true ) ?: 'open';
+            if ( $current !== $status ) {
+                update_post_meta( $post->ID, '_invoice_status', $status );
+                $updated++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        return rest_ensure_response( array(
+            'updated' => $updated,
+            'skipped' => $skipped,
+            'message' => sprintf( 'Updated %d invoices to "%s" status (skipped %d already with that status).', $updated, $status, $skipped ),
+        ) );
     }
 
     public function get_customers( $request ) {
@@ -469,7 +531,7 @@ class REST_API {
                 } elseif ( in_array( $data_key, array( 'tax', 'discount', 'shipping', 'amount_paid' ), true ) ) {
                     $value = floatval( $value );
                 } elseif ( $data_key === 'status' ) {
-                    $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft' );
+                    $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft', 'sent' );
                     $value = in_array( $value, $allowed_statuses, true ) ? $value : 'open';
                 } else {
                     $value = sanitize_text_field( $value );

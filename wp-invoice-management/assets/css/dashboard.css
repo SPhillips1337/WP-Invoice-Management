@@ -202,6 +202,7 @@
 }
 
 .status-open { background: #eff6ff; color: #3b82f6; }
+.status-sent { background: #fef3c7; color: #d97706; }
 .status-paid { background: #ecfdf5; color: #10b981; }
 .status-overdue { background: #fef2f2; color: #ef4444; }
 

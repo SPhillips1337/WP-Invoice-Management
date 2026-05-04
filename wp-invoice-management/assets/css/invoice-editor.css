@@ -262,6 +262,7 @@
 
 .status-badge.draft { background: #f1f5f9; color: #64748b; }
 .status-badge.open { background: #dbeafe; color: #2563eb; }
+.status-badge.sent { background: #fef3c7; color: #d97706; }
 .status-badge.paid { background: #dcfce7; color: #16a34a; }
 .status-badge.overdue { background: #fee2e2; color: #dc2626; }
 
@@ -521,6 +522,7 @@
 .line-items-table td {
     padding: 12px 8px;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
 }
 
 .col-date { width: 120px; }
@@ -540,8 +542,24 @@
     width: 100%;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
-    padding: 8px;
+    padding: 6px 8px;
     font-size: 14px;
+    height: 32px;
+    box-sizing: border-box;
+}
+
+.line-items-table textarea.item-description {
+    width: 100%;
+    min-height: 32px;
+    resize: vertical;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 14px;
+    font-family: inherit;
+    line-height: 1.4;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .line-items-table input:focus {
@@ -567,6 +585,14 @@
     border-radius: 0 !important;
     background: transparent !important;
     padding-left: 0 !important;
+    resize: vertical;
+    min-height: 32px;
+}
+
+textarea.project-header-input {
+    border: none !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    overflow: hidden;
 }
 
 .project-header-input:focus {
@@ -848,5 +874,57 @@
     .totals-left,
     .totals-right {
         width: 100%;
+    }
+}
+
+@media (min-width: 1921px) {
+    .editor-content {
+        max-width: 94%;
+    }
+
+    .col-date {
+        width: 90px;
+    }
+
+    .col-description {
+        width: auto;
+    }
+
+    .col-qty {
+        width: 50px;
+    }
+
+    .col-rate {
+        width: 90px;
+    }
+
+    .col-amount {
+        width: 90px;
+    }
+
+    .line-items-table textarea.item-description {
+        width: 100%;
+        min-height: 32px;
+        height: 32px;
+        resize: vertical;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font-size: 14px;
+        font-family: inherit;
+        line-height: 1.4;
+        box-sizing: border-box;
+    }
+
+    .line-items-table input[type="text"],
+    .line-items-table input[type="number"] {
+        height: 32px;
+        padding: 6px 8px;
+    }
+
+    .line-items-table textarea.item-description:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 }
