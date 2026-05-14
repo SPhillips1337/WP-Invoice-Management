@@ -124,7 +124,8 @@
                     '<td class="text-right">' + wpInvoiceSettings.settings.currency_symbol + parseFloat(item.total).toFixed(2) + '</td>' +
                     '<td class="text-center">' +
                         '<a href="' + item.view_url + '" target="_blank" title="View PDF">📄</a> ' +
-                        '<a href="' + item.edit_url + '" title="Edit">✏️</a>' +
+                        '<a href="' + item.edit_url + '" title="Edit">✏️</a> ' +
+                        '<a href="#" class="duplicate-invoice" data-id="' + item.id + '" title="Duplicate">📑</a>' +
                     '</td>' +
                 '</tr>';
             });
@@ -263,6 +264,67 @@
                 state.page++;
                 loadInvoices();
             }
+        });
+
+        // Duplicate Invoice
+        $(document).on('click', '.duplicate-invoice', function(e) {
+            e.preventDefault();
+            var id = $(this).data('id');
+            var $btn = $(this);
+            
+            if ($btn.hasClass('loading')) return;
+            $btn.addClass('loading').text('⏳');
+
+            // 1. Get original invoice data
+            $.ajax({
+                url: wpApiSettings.root + 'wp-invoice/v1/invoices/' + id,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+                },
+                success: function(invoice) {
+                    // 2. Prepare duplicate data
+                    var duplicateData = {
+                        title: invoice.title + ' (copy)',
+                        status: 'draft',
+                        logo_id: invoice.logo_id,
+                        from: invoice.from,
+                        to: invoice.to,
+                        ship_to: invoice.ship_to,
+                        date: new Date().toISOString().split('T')[0], // New date
+                        due_date: invoice.due_date,
+                        po_number: invoice.po_number,
+                        items: invoice.items,
+                        notes: invoice.notes,
+                        terms: invoice.terms,
+                        tax: invoice.tax,
+                        discount: invoice.discount,
+                        shipping: invoice.shipping
+                    };
+
+                    // 3. Create new invoice
+                    $.ajax({
+                        url: wpApiSettings.root + 'wp-invoice/v1/invoices',
+                        method: 'POST',
+                        data: JSON.stringify(duplicateData),
+                        contentType: 'application/json',
+                        beforeSend: function(xhr) {
+                            xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+                        },
+                        success: function(newInvoice) {
+                            // 4. Redirect to editor
+                            window.location.href = newInvoice.edit_url;
+                        },
+                        error: function() {
+                            alert('Failed to create duplicate invoice.');
+                            $btn.removeClass('loading').text('📑');
+                        }
+                    });
+                },
+                error: function() {
+                    alert('Failed to load original invoice data.');
+                    $btn.removeClass('loading').text('📑');
+                }
+            });
         });
 
         // --- Import Logic ---

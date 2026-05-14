@@ -89,6 +89,10 @@
                                 <span class="dashicons dashicons-download"></span>
                                 PDF
                             </button>
+                            <button class="btn btn-secondary" id="duplicateInvoiceBtn" title="Duplicate Invoice">
+                                <span class="dashicons dashicons-admin-page"></span>
+                                Duplicate
+                            </button>
                             <button class="btn btn-danger" id="deleteInvoiceBtn" title="Delete Invoice">
                                 <span class="dashicons dashicons-trash"></span>
                             </button>

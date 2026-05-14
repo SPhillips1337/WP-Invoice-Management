@@ -53,7 +53,8 @@
         settingsForm: document.getElementById('settingsForm'),
         closeSettingsModal: document.querySelector('#settingsModal .close-modal'),
         useDefaultAddress: document.getElementById('useDefaultAddress'),
-        customerSelect: document.getElementById('customerSelect')
+        customerSelect: document.getElementById('customerSelect'),
+        duplicateInvoiceBtn: document.getElementById('duplicateInvoiceBtn')
     };
 
     let sortOrder = 'desc'; // Default: most recent first
@@ -438,6 +439,37 @@
         }
     }
 
+    async function duplicateInvoice() {
+        if (!currentInvoiceId) return;
+
+        const data = getInvoiceData();
+        data.title = data.title + ' (copy)';
+        data.status = 'draft'; // Always start as draft for a copy
+
+        elements.duplicateInvoiceBtn.disabled = true;
+        const originalHtml = elements.duplicateInvoiceBtn.innerHTML;
+        elements.duplicateInvoiceBtn.innerHTML = '<span class="dashicons dashicons-update"></span> Duplicating...';
+
+        try {
+            const result = await apiCall('/invoices', 'POST', data);
+            currentInvoiceId = result.id;
+            
+            // Update URL without reloading
+            const url = new URL(window.location);
+            url.searchParams.set('id', result.id);
+            window.history.pushState({}, '', url);
+
+            await loadInvoices();
+            loadInvoice(currentInvoiceId);
+        } catch (error) {
+            console.error('Failed to duplicate invoice:', error);
+            alert('Failed to duplicate invoice: ' + error.message);
+        } finally {
+            elements.duplicateInvoiceBtn.disabled = false;
+            elements.duplicateInvoiceBtn.innerHTML = originalHtml;
+        }
+    }
+
     function newInvoice() {
         currentInvoiceId = null;
         hideEditor();
@@ -544,6 +576,7 @@
     });
 
     elements.saveInvoiceBtn.addEventListener('click', saveInvoice);
+    elements.duplicateInvoiceBtn.addEventListener('click', duplicateInvoice);
     elements.newInvoiceBtn.addEventListener('click', newInvoice);
     
     elements.deleteInvoiceBtn.addEventListener('click', () => {
