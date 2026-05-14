@@ -150,7 +150,7 @@
             <div class="invoice-item ${inv.id === currentInvoiceId ? 'active' : ''}" data-id="${inv.id}">
                 <div class="invoice-item-header">
                     <div class="invoice-item-title">${inv.title || 'Invoice #' + inv.id}</div>
-                    <span class="invoice-item-amount">$${(inv.total || 0).toFixed(2)}</span>
+                    <span class="invoice-item-amount">${WP_INVOICE_API.settings.currency_symbol}${(inv.total || 0).toFixed(2)}</span>
                 </div>
                 <div class="invoice-item-customer">${inv.to ? inv.to.split('\n')[0] : 'No Client'}</div>
                 <div class="invoice-item-meta">

@@ -177,7 +177,7 @@
                                 <div class="totals-right">
                                     <div class="total-row">
                                         <span>Subtotal</span>
-                                        <span id="subtotalDisplay">$0.00</span>
+                                        <span id="subtotalDisplay"><?php echo esc_html( \Wpim\Invoice\Admin\SettingsPage::get_settings()['currency_symbol'] ); ?>0.00</span>
                                     </div>
                                     <div class="total-row editable">
                                         <span>Tax</span>
@@ -193,7 +193,7 @@
                                     </div>
                                     <div class="total-row grand-total">
                                         <span>Total</span>
-                                        <span id="totalDisplay">$0.00</span>
+                                        <span id="totalDisplay"><?php echo esc_html( \Wpim\Invoice\Admin\SettingsPage::get_settings()['currency_symbol'] ); ?>0.00</span>
                                     </div>
                                 </div>
                             </div>

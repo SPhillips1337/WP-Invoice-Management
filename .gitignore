@@ -9,3 +9,8 @@ project.json
 node_modules/
 vendor/
 *.log
+.kiro/specs/invoice-backup-export-import/.config.kiro
+.kiro/specs/invoice-backup-export-import/design.md
+.kiro/specs/invoice-backup-export-import/requirements.md
+.kiro/specs/invoice-backup-export-import/tasks.md
+.kiro/specs/
