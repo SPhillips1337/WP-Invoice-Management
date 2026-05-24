@@ -21,10 +21,22 @@
                 <button class="btn btn-secondary" id="settingsBtn" title="Settings">
                     <span class="dashicons dashicons-admin-generic"></span>
                 </button>
+                <a href="<?php echo esc_url( add_query_arg( 'invoice_dashboard', '1', home_url() ) . '#customers' ); ?>" class="btn btn-secondary" id="customersBtn">
+                    <span class="dashicons dashicons-groups"></span>
+                    Customers
+                </a>
+                <a href="<?php echo esc_url( add_query_arg( 'invoice_dashboard', '1', home_url() ) ); ?>" class="btn btn-secondary" id="invoicesBtn">
+                    <span class="dashicons dashicons-media-document"></span>
+                    Invoices
+                </a>
                 <button class="btn btn-secondary" id="newInvoiceBtn">
                     <span class="dashicons dashicons-plus"></span>
                     New Invoice
                 </button>
+                <a href="<?php echo esc_url( wp_logout_url( add_query_arg( 'invoice_editor', '1', home_url() ) ) ); ?>" class="btn" style="background:#dc2626; color:white; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;">
+                    <span class="dashicons dashicons-logout" style="margin-right:6px;"></span>
+                    Logout
+                </a>
             </div>
         </header>
 
@@ -121,6 +133,9 @@
                                         <select id="customerSelect" class="customer-select">
                                             <option value="">Select Customer...</option>
                                         </select>
+                                        <a href="#" id="jumpToCustomerBtn" class="btn-icon" title="Jump to Customer" style="display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--surface-color); color: var(--text-secondary); text-decoration: none;">
+                                            <span class="dashicons dashicons-external" style="font-size: 16px; width: 16px; height: 16px;"></span>
+                                        </a>
                                     </div>
                                     <textarea id="toAddress" placeholder="Client Name&#10;Address Line 1&#10;City, State ZIP"></textarea>
                                 </div>
@@ -238,6 +253,10 @@
                 <div class="form-group">
                     <label>Tax Label</label>
                     <input type="text" name="tax_label" value="" placeholder="Tax">
+                </div>
+                <div class="form-group">
+                    <label>Default Tax Rate (%)</label>
+                    <input type="number" name="default_tax_rate" step="0.01" min="0" value="" placeholder="0">
                 </div>
                 <div class="form-group">
                     <label>Default Country</label>

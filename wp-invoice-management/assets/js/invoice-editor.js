@@ -9,6 +9,7 @@
     let currentInvoiceId = null;
     let invoices = [];
     let customers = [];
+    let isTaxModified = false;
 
     const elements = {
         invoiceList: document.getElementById('invoiceList'),
@@ -54,6 +55,7 @@
         closeSettingsModal: document.querySelector('#settingsModal .close-modal'),
         useDefaultAddress: document.getElementById('useDefaultAddress'),
         customerSelect: document.getElementById('customerSelect'),
+        jumpToCustomerBtn: document.getElementById('jumpToCustomerBtn'),
         duplicateInvoiceBtn: document.getElementById('duplicateInvoiceBtn')
     };
 
@@ -139,6 +141,7 @@
             html += `<option value="${customer.id}">${customer.name}</option>`;
         });
         elements.customerSelect.innerHTML = html;
+        autoSelectMatchingCustomer();
     }
 
     function renderInvoiceList() {
@@ -223,8 +226,14 @@
         elements.notes.value = invoice.notes || '';
         elements.terms.value = invoice.terms || '';
 
+        elements.taxAmount.value = invoice.tax || 0;
+        elements.discountAmount.value = invoice.discount || 0;
+        elements.shippingAmount.value = invoice.shipping || 0;
+        isTaxModified = true;
+
         renderLineItems(invoice.items || []);
-        calculateTotals(invoice);
+        calculateTotals();
+        autoSelectMatchingCustomer();
     }
 
     function renderLineItems(items) {
@@ -346,6 +355,11 @@
             }
         });
 
+        const rate = parseFloat(WP_INVOICE_API.settings.default_tax_rate) || 0;
+        if (!isTaxModified && rate > 0) {
+            elements.taxAmount.value = (subtotal * (rate / 100)).toFixed(2);
+        }
+
         const tax = parseFloat(elements.taxAmount.value) || 0;
         const discount = parseFloat(elements.discountAmount.value) || 0;
         const shipping = parseFloat(elements.shippingAmount.value) || 0;
@@ -413,6 +427,11 @@
             } else {
                 const result = await apiCall('/invoices', 'POST', data);
                 currentInvoiceId = result.id;
+                
+                // Update URL without reloading to transition to the Edit state
+                const url = new URL(window.location);
+                url.searchParams.set('id', result.id);
+                window.history.pushState({}, '', url);
             }
             await loadInvoices();
             loadInvoice(currentInvoiceId);
@@ -472,6 +491,12 @@
 
     function newInvoice() {
         currentInvoiceId = null;
+        
+        // Remove id query param from URL without reloading
+        const url = new URL(window.location);
+        url.searchParams.delete('id');
+        window.history.pushState({}, '', url);
+
         hideEditor();
         showEditor();
         
@@ -493,6 +518,7 @@
         elements.taxAmount.value = 0;
         elements.discountAmount.value = 0;
         elements.shippingAmount.value = 0;
+        isTaxModified = false;
         
         renderLineItems([
             { description: 'Project Name', type: 'section' },
@@ -523,10 +549,63 @@
         });
     }
 
+    function autoSelectMatchingCustomer() {
+        if (!elements.customerSelect || !elements.toAddress) return;
+        const toAddressValue = elements.toAddress.value.trim();
+        if (!toAddressValue) {
+            elements.customerSelect.value = '';
+            if (elements.jumpToCustomerBtn) {
+                elements.jumpToCustomerBtn.style.display = 'none';
+            }
+            return;
+        }
+
+        // Try to match by name or by the full address text block
+        const lines = toAddressValue.split('\n');
+        const firstLine = lines[0].trim().toLowerCase();
+
+        let matchedCustomer = customers.find(c => {
+            return c.name && c.name.trim().toLowerCase() === firstLine;
+        });
+
+        if (!matchedCustomer) {
+            matchedCustomer = customers.find(c => {
+                let addressText = '';
+                if (c.name) addressText += c.name + '\n';
+                if (c.company) addressText += c.company + '\n';
+                if (c.address) addressText += c.address;
+                return addressText.trim().toLowerCase() === toAddressValue.toLowerCase();
+            });
+        }
+
+        if (matchedCustomer) {
+            elements.customerSelect.value = matchedCustomer.id;
+            if (elements.jumpToCustomerBtn) {
+                elements.jumpToCustomerBtn.style.display = 'inline-flex';
+                elements.jumpToCustomerBtn.href = `${window.location.origin}${window.location.pathname}?invoice_dashboard=1#customer-${matchedCustomer.id}`;
+            }
+        } else {
+            elements.customerSelect.value = '';
+            if (elements.jumpToCustomerBtn) {
+                elements.jumpToCustomerBtn.style.display = 'none';
+            }
+        }
+    }
+
     if (elements.customerSelect) {
         elements.customerSelect.addEventListener('change', () => {
             const customerId = elements.customerSelect.value;
-            if (!customerId) return;
+            if (!customerId) {
+                if (elements.jumpToCustomerBtn) {
+                    elements.jumpToCustomerBtn.style.display = 'none';
+                }
+                return;
+            }
+
+            if (elements.jumpToCustomerBtn) {
+                elements.jumpToCustomerBtn.style.display = 'inline-flex';
+                elements.jumpToCustomerBtn.href = `${window.location.origin}${window.location.pathname}?invoice_dashboard=1#customer-${customerId}`;
+            }
 
             const customer = customers.find(c => c.id == customerId);
             if (customer) {
@@ -538,6 +617,10 @@
                 elements.toAddress.value = addressText.trim();
             }
         });
+    }
+
+    if (elements.toAddress) {
+        elements.toAddress.addEventListener('input', autoSelectMatchingCustomer);
     }
 
     elements.addLineItem.addEventListener('click', () => {
@@ -598,7 +681,10 @@
         }
     });
 
-    elements.taxAmount.addEventListener('input', calculateTotals);
+    elements.taxAmount.addEventListener('input', () => {
+        isTaxModified = true;
+        calculateTotals();
+    });
     elements.discountAmount.addEventListener('input', calculateTotals);
     elements.shippingAmount.addEventListener('input', calculateTotals);
 
@@ -669,6 +755,7 @@
             elements.settingsForm.querySelector('[name="currency_symbol"]').value = settings.currency_symbol;
             elements.settingsForm.querySelector('[name="currency_code"]').value = settings.currency_code;
             elements.settingsForm.querySelector('[name="tax_label"]').value = settings.tax_label;
+            elements.settingsForm.querySelector('[name="default_tax_rate"]').value = settings.default_tax_rate || 0;
             elements.settingsForm.querySelector('[name="default_country"]').value = settings.default_country;
             elements.settingsForm.querySelector('[name="default_address"]').value = settings.default_address || '';
             elements.settingsModal.classList.add('active');
@@ -691,6 +778,7 @@
                 currency_symbol: elements.settingsForm.querySelector('[name="currency_symbol"]').value,
                 currency_code: elements.settingsForm.querySelector('[name="currency_code"]').value,
                 tax_label: elements.settingsForm.querySelector('[name="tax_label"]').value,
+                default_tax_rate: parseFloat(elements.settingsForm.querySelector('[name="default_tax_rate"]').value) || 0,
                 default_country: elements.settingsForm.querySelector('[name="default_country"]').value,
                 default_address: elements.settingsForm.querySelector('[name="default_address"]').value
             };

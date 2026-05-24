@@ -1,6 +1,12 @@
 /* WP Invoice Management Dashboard Styles */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+.wp-invoice-premium-ui *,
+.wp-invoice-premium-ui *::before,
+.wp-invoice-premium-ui *::after {
+    box-sizing: border-box;
+}
+
 .wp-invoice-premium-ui {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #1e293b;
@@ -166,6 +172,7 @@
     letter-spacing: 0.05em;
     border-bottom: 1px solid #e2e8f0;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 #wp-invoice-table th:hover, #wp-customer-table th:hover {
@@ -176,6 +183,13 @@
     padding: 16px 24px;
     border-bottom: 1px solid #f1f5f9;
     font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Allow Customer address column to wrap normally if viewport is tight */
+#wp-invoice-table td:nth-child(3),
+#wp-customer-table td:nth-child(3) {
+    white-space: normal;
 }
 
 #wp-invoice-table tr:hover td, #wp-customer-table tr:hover td {

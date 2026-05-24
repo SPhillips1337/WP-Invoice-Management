@@ -22,6 +22,9 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                     <a href="<?php echo esc_url( $editor_url ); ?>" class="wp-invoice-btn wp-invoice-btn-primary">
                         <span class="icon">＋</span> New Invoice
                     </a>
+                    <a href="<?php echo esc_url( wp_logout_url( add_query_arg( 'invoice_dashboard', '1', home_url() ) ) ); ?>" class="wp-invoice-btn" style="background:#dc2626; color:white; border:none; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;">
+                        <span class="icon" style="margin-right:6px;">🚪</span> Logout
+                    </a>
                 </div>
             </div>
         </div>
@@ -34,8 +37,15 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
         </div>
 
         <div id="wp-invoice-invoices-view" class="wp-invoice-card">
-            <div class="wp-invoice-table-toolbar">
-                <div class="wp-invoice-search">
+            <div class="wp-invoice-table-toolbar" style="display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                <div class="wp-invoice-bulk-actions" style="display: none; align-items: center; gap: 10px;">
+                    <select id="wp-invoice-bulk-action-select" class="wp-invoice-input" style="padding: 4px 8px; font-size: 13px; width: auto; min-width: 150px; margin-bottom: 0;">
+                        <option value="">Bulk Actions</option>
+                        <option value="delete">Delete Selected</option>
+                    </select>
+                    <button id="wp-invoice-bulk-action-apply" class="wp-invoice-btn wp-invoice-btn-secondary" style="padding: 5px 12px; font-size: 13px;">Apply</button>
+                </div>
+                <div class="wp-invoice-search" style="margin-left: auto;">
                     <span class="icon">🔍</span>
                     <input type="text" id="wp-invoice-search-input" placeholder="Search invoices..." />
                 </div>
@@ -45,6 +55,7 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                 <table id="wp-invoice-table">
                     <thead>
                         <tr>
+                            <th class="text-center" style="width: 40px;"><input type="checkbox" id="wp-invoice-select-all" /></th>
                             <th data-sort="title">Reference <span class="sort-icon">↕</span></th>
                             <th data-sort="customer">Customer <span class="sort-icon">↕</span></th>
                             <th data-sort="date">Date <span class="sort-icon">↕</span></th>
@@ -57,7 +68,7 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                     <tbody id="wp-invoice-list-body">
                         <!-- Loaded via JS -->
                         <tr>
-                            <td colspan="7" class="text-center py-8">Loading invoices...</td>
+                            <td colspan="8" class="text-center py-8">Loading invoices...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -180,6 +191,10 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                         <input type="text" name="tax_label" value="" placeholder="Tax" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
                     </div>
                     <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Default Tax Rate (%)</label>
+                        <input type="number" name="default_tax_rate" step="0.01" min="0" value="" placeholder="0" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+                    </div>
+                    <div class="wp-invoice-form-group" style="margin-bottom: 15px;">
                         <label style="display:block; margin-bottom:5px; font-weight:600;">Default Country</label>
                         <input type="text" name="default_country" value="" placeholder="United Kingdom" class="wp-invoice-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" />
                     </div>
@@ -191,6 +206,23 @@ $editor_url = add_query_arg( 'invoice_editor', '1', home_url() );
                         <button type="submit" class="wp-invoice-btn wp-invoice-btn-primary" style="width:100%;">Save Settings</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="wp-invoice-delete-confirm-modal" class="wp-invoice-overlay" style="display:none;">
+        <div class="wp-invoice-modal" style="max-width: 400px;">
+            <div class="wp-invoice-modal-header">
+                <h3 id="delete-confirm-title">Confirm Delete</h3>
+                <button class="wp-invoice-modal-close" style="float:right; border:none; background:none; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div class="wp-invoice-modal-body" style="padding: 20px 0;">
+                <p id="delete-confirm-message">Are you sure you want to delete this invoice? This action cannot be undone.</p>
+                <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="wp-invoice-delete-cancel" class="wp-invoice-btn wp-invoice-btn-secondary" style="flex: 1;">Cancel</button>
+                    <button id="wp-invoice-delete-confirm" class="wp-invoice-btn" style="background:#dc2626; color:white; border:none; flex: 1; cursor:pointer;">Delete</button>
+                </div>
             </div>
         </div>
     </div>

@@ -69,13 +69,19 @@ class BackupExporter {
         $page     = 1;
 
         do {
-            $query = new \WP_Query( array(
+            $args = array(
                 'post_type'      => 'wp_invoice',
                 'post_status'    => 'publish',
                 'posts_per_page' => self::BATCH_SIZE,
                 'paged'          => $page,
                 'no_found_rows'  => false, // we need max_num_pages
-            ) );
+            );
+
+            if ( ! current_user_can( 'manage_options' ) ) {
+                $args['author'] = get_current_user_id();
+            }
+
+            $query = new \WP_Query( $args );
 
             if ( $query->have_posts() ) {
                 foreach ( $query->posts as $post ) {
@@ -106,11 +112,17 @@ class BackupExporter {
     private function collect_customers(): array {
         $customers = array();
 
-        $query = new \WP_Query( array(
+        $args = array(
             'post_type'      => 'wp_customer',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
-        ) );
+        );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            $args['author'] = get_current_user_id();
+        }
+
+        $query = new \WP_Query( $args );
 
         if ( $query->have_posts() ) {
             foreach ( $query->posts as $post ) {

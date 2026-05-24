@@ -6,6 +6,9 @@ A multi-user invoicing plugin for WordPress, designed to provide a seamless expe
 
 WP Invoice Management allows users to create, manage, and download professional invoices directly from a WordPress site. It features a custom frontend editor for a reactive, application-like feel while maintaining the robustness of the WordPress backend.
 
+## Demo
+A demo is available at https://invoices.happymonkey.ai/ (Expect bugs though as still in Beta testing)
+
 ## 🛠 Tech Stack
 
 - **PHP**: Core logic and WordPress integration.

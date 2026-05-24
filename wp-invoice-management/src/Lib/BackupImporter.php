@@ -189,7 +189,9 @@ class BackupImporter {
         if ( $update_mode ) {
             $existing = get_page_by_title( $title, OBJECT, 'wp_invoice' );
             if ( $existing ) {
-                $post_id = $existing->ID;
+                if ( current_user_can( 'manage_options' ) || (int) $existing->post_author === $author_id ) {
+                    $post_id = $existing->ID;
+                }
             }
         }
 
@@ -249,7 +251,9 @@ class BackupImporter {
         if ( $update_mode ) {
             $existing = get_page_by_title( $title, OBJECT, 'wp_customer' );
             if ( $existing ) {
-                $post_id = $existing->ID;
+                if ( current_user_can( 'manage_options' ) || (int) $existing->post_author === $author_id ) {
+                    $post_id = $existing->ID;
+                }
             }
         }
 

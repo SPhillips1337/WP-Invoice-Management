@@ -22,6 +22,7 @@ class Plugin {
         new CPT\Customer();
         new API\REST_API();
         new API\BackupRestAPI();
+        new API\AuthAPI();
         new Admin\ImportPage();
     }
 
@@ -34,6 +35,7 @@ class Plugin {
         add_shortcode( 'invoice_dashboard', array( $this, 'render_invoice_dashboard' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+        add_action( 'pre_get_posts', array( $this, 'filter_admin_queries' ) );
         
         // Page Templates
         add_filter( 'theme_templates', array( $this, 'register_page_templates' ), 10, 4 );
@@ -57,13 +59,20 @@ class Plugin {
             exit;
         }
 
+        // If trying to access editor or dashboard but not logged in, render auth page
+        if ( isset( $_GET['wp-invoice-editor'] ) || isset( $_GET['invoice_editor'] ) || isset( $_GET['invoice_dashboard'] ) ) {
+            if ( ! is_user_logged_in() ) {
+                $this->render_frontend_auth();
+                exit;
+            }
+        }
+
         if ( isset( $_GET['invoice_dashboard'] ) ) {
             $this->render_full_dashboard();
             exit;
         }
 
         if ( isset( $_GET['wp-invoice-editor'] ) || isset( $_GET['invoice_editor'] ) ) {
-            // Skip auth check for now - add ?invoice_editor=1 to test
             $this->render_frontend_editor();
             exit;
         }
@@ -76,6 +85,20 @@ class Plugin {
             }
             wp_die( 'Invalid invoice' );
         }
+    }
+
+    public function render_frontend_auth() {
+        $template_path = dirname( dirname( __FILE__ ) ) . '/templates/auth.php';
+        
+        if ( ! file_exists( $template_path ) ) {
+            echo '<p>Error: Auth Template not found at ' . $template_path . '</p>';
+            return;
+        }
+        
+        wp_enqueue_style( 'wp-invoice-auth' );
+        wp_enqueue_script( 'wp-invoice-auth' );
+        
+        include $template_path;
     }
 
     public function render_frontend_editor( $atts = array() ) {
@@ -92,7 +115,14 @@ class Plugin {
 
     public function render_invoice_dashboard( $atts = array() ) {
         if ( ! is_user_logged_in() ) {
-            return '<p>Please <a href="' . wp_login_url( get_permalink() ) . '">log in</a> to view invoices.</p>';
+            $login_url    = add_query_arg( 'invoice_dashboard', '1', home_url() );
+            $register_url = add_query_arg( array( 'invoice_dashboard' => '1', 'action' => 'register' ), home_url() );
+            $settings     = Admin\SettingsPage::get_settings();
+            
+            if ( ! empty( $settings['enable_registration'] ) ) {
+                return '<p>Please <a href="' . esc_url( $login_url ) . '">log in</a>, or <a href="' . esc_url( $register_url ) . '">register for a new account</a> to view invoices.</p>';
+            }
+            return '<p>Please <a href="' . esc_url( $login_url ) . '">log in</a> to view invoices.</p>';
         }
 
         add_filter( 'body_class', function( $classes ) {
@@ -445,7 +475,7 @@ class Plugin {
             'edit.php?post_type=wp_invoice',
             __( 'Backup & Restore', 'wp-invoice-management' ),
             __( 'Backup & Restore', 'wp-invoice-management' ),
-            'manage_options',
+            'edit_posts',
             'wp-invoice-backup',
             array( new Admin\BackupPage(), 'render' )
         );
@@ -462,6 +492,21 @@ class Plugin {
         wp_register_script(
             'wp-invoice-dashboard',
             plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/dashboard.js',
+            array( 'jquery' ),
+            WPIM_VERSION,
+            true
+        );
+
+        wp_register_style(
+            'wp-invoice-auth',
+            plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/auth.css',
+            array(),
+            WPIM_VERSION
+        );
+
+        wp_register_script(
+            'wp-invoice-auth',
+            plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/auth.js',
             array( 'jquery' ),
             WPIM_VERSION,
             true
@@ -529,6 +574,17 @@ class Plugin {
                 WPIM_VERSION,
                 true
             );
+        }
+    }
+
+    public function filter_admin_queries( $query ) {
+        if ( is_admin() && $query->is_main_query() ) {
+            $post_type = $query->get( 'post_type' );
+            if ( in_array( $post_type, array( 'wp_invoice', 'wp_customer' ), true ) ) {
+                if ( ! current_user_can( 'manage_options' ) ) {
+                    $query->set( 'author', get_current_user_id() );
+                }
+            }
         }
     }
 }

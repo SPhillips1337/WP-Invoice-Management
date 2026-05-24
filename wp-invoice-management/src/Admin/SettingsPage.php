@@ -90,6 +90,15 @@ class SettingsPage {
         );
 
         add_settings_field(
+            'default_tax_rate',
+            __( 'Default Tax Rate (%)', 'wp-invoice-management' ),
+            array( $this, 'render_text_field' ),
+            'wp-invoice-settings',
+            'wp_invoice_general_section',
+            array( 'label_for' => 'default_tax_rate', 'default' => '0' )
+        );
+
+        add_settings_field(
             'default_country',
             __( 'Default Country', 'wp-invoice-management' ),
             array( $this, 'render_text_field' ),
@@ -105,6 +114,32 @@ class SettingsPage {
             'wp-invoice-settings',
             'wp_invoice_general_section',
             array( 'label_for' => 'default_address', 'default' => '' )
+        );
+
+        add_settings_field(
+            'enable_registration',
+            __( 'Enable Frontend Registration', 'wp-invoice-management' ),
+            array( $this, 'render_checkbox' ),
+            'wp-invoice-settings',
+            'wp_invoice_general_section',
+            array( 'label_for' => 'enable_registration', 'default' => 0 )
+        );
+
+        add_settings_field(
+            'registration_role',
+            __( 'Registration User Role', 'wp-invoice-management' ),
+            array( $this, 'render_select' ),
+            'wp-invoice-settings',
+            'wp_invoice_general_section',
+            array( 
+                'label_for' => 'registration_role', 
+                'default'   => 'contributor',
+                'options'   => array(
+                    'contributor' => __( 'Contributor (Create & edit own invoices)', 'wp-invoice-management' ),
+                    'author'      => __( 'Author (Create, edit & publish own invoices)', 'wp-invoice-management' ),
+                    'editor'      => __( 'Editor (Manage all invoices)', 'wp-invoice-management' ),
+                )
+            )
         );
 
         add_settings_section(
@@ -160,6 +195,35 @@ class SettingsPage {
         <?php
     }
 
+    public function render_checkbox( $args ) {
+        $options = get_option( 'wp_invoice_settings' );
+        $value = isset( $options[ $args['label_for'] ] ) ? (int) $options[ $args['label_for'] ] : $args['default'];
+        ?>
+        <input type="checkbox" 
+               id="<?php echo esc_attr( $args['label_for'] ); ?>" 
+               name="wp_invoice_settings[<?php echo esc_attr( $args['label_for'] ); ?>]" 
+               value="1" 
+               <?php checked( 1, $value ); ?>>
+        <label for="<?php echo esc_attr( $args['label_for'] ); ?>"><?php _e( 'Allow visitors to register new accounts from the login page.', 'wp-invoice-management' ); ?></label>
+        <?php
+    }
+
+    public function render_select( $args ) {
+        $options = get_option( 'wp_invoice_settings' );
+        $value = isset( $options[ $args['label_for'] ] ) ? $options[ $args['label_for'] ] : $args['default'];
+        ?>
+        <select id="<?php echo esc_attr( $args['label_for'] ); ?>" 
+                name="wp_invoice_settings[<?php echo esc_attr( $args['label_for'] ); ?>]">
+            <?php foreach ( $args['options'] as $key => $label ) : ?>
+                <option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $value ); ?>>
+                    <?php echo esc_html( $label ); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <p class="description"><?php _e( 'Select the role assigned to newly registered users.', 'wp-invoice-management' ); ?></p>
+        <?php
+    }
+
     public function render_settings_page() {
         ?>
         <div class="wrap">
@@ -175,15 +239,49 @@ class SettingsPage {
         <?php
     }
 
-    public static function get_settings() {
-        $defaults = array(
+    public static function get_settings( $user_id = null ) {
+        if ( ! $user_id ) {
+            $user_id = get_current_user_id();
+        }
+
+        // Standard defaults for individual user preferences
+        $user_defaults = array(
             'currency_symbol' => '$',
             'currency_code'   => 'USD',
             'tax_label'       => 'Tax',
             'default_country' => 'United Kingdom',
             'default_address' => '',
+            'default_tax_rate' => 0,
         );
-        $options = get_option( 'wp_invoice_settings', array() );
-        return wp_parse_args( $options, $defaults );
+
+        // Standard defaults for global configurations
+        $system_defaults = array(
+            'enable_registration' => 0,
+            'registration_role'   => 'contributor',
+        );
+
+        // Retrieve global options (contains enable_registration, registration_role)
+        $global_options = get_option( 'wp_invoice_settings', array() );
+
+        // Extract system-wide configurations from global options
+        $system_settings = array();
+        foreach ( $system_defaults as $key => $default_val ) {
+            $system_settings[ $key ] = isset( $global_options[ $key ] ) ? $global_options[ $key ] : $default_val;
+        }
+
+        // Retrieve user options from user meta
+        $user_options = array();
+        if ( $user_id ) {
+            $user_meta = get_user_meta( $user_id, 'wp_invoice_settings', true );
+            if ( is_array( $user_meta ) ) {
+                $user_options = $user_meta;
+            }
+        }
+
+        // Merge user preferences with user defaults
+        $merged_user_settings = wp_parse_args( $user_options, $user_defaults );
+
+        // Combine system settings and user settings
+        return array_merge( $system_settings, $merged_user_settings );
     }
 }

@@ -66,6 +66,14 @@ class REST_API {
             ),
         ) );
 
+        register_rest_route( 'wp-invoice/v1', '/invoices/bulk-delete', array(
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( $this, 'bulk_delete_invoices' ),
+                'permission_callback' => array( $this, 'check_permission' ),
+            ),
+        ) );
+
         register_rest_route( 'wp-invoice/v1', '/invoices/(?P<id>\d+)', array(
             array(
                 'methods'  => 'GET',
@@ -144,7 +152,7 @@ class REST_API {
             array(
                 'methods'  => 'POST',
                 'callback' => array( $this, 'update_settings' ),
-                'permission_callback' => array( $this, 'check_admin_permission' ),
+                'permission_callback' => array( $this, 'check_permission' ),
             ),
         ) );
 
@@ -179,21 +187,45 @@ class REST_API {
             return new \WP_Error( 'invalid_data', 'No data provided', array( 'status' => 400 ) );
         }
 
-        $allowed_fields = array( 'currency_symbol', 'currency_code', 'tax_label', 'default_country', 'default_address' );
-        $current_settings = \Wpim\Invoice\Admin\SettingsPage::get_settings();
-        
-        foreach ( $allowed_fields as $field ) {
+        $user_id = get_current_user_id();
+
+        // 1. Update user-specific settings
+        $user_fields = array( 'currency_symbol', 'currency_code', 'tax_label', 'default_country', 'default_address', 'default_tax_rate' );
+        $user_settings = get_user_meta( $user_id, 'wp_invoice_settings', true );
+        if ( ! is_array( $user_settings ) ) {
+            $user_settings = array();
+        }
+
+        foreach ( $user_fields as $field ) {
             if ( isset( $settings[ $field ] ) ) {
                 if ( $field === 'default_address' ) {
-                    $current_settings[ $field ] = sanitize_textarea_field( $settings[ $field ] );
+                    $user_settings[ $field ] = sanitize_textarea_field( $settings[ $field ] );
+                } elseif ( $field === 'default_tax_rate' ) {
+                    $user_settings[ $field ] = floatval( $settings[ $field ] );
                 } else {
-                    $current_settings[ $field ] = sanitize_text_field( $settings[ $field ] );
+                    $user_settings[ $field ] = sanitize_text_field( $settings[ $field ] );
                 }
             }
         }
+        update_user_meta( $user_id, 'wp_invoice_settings', $user_settings );
 
-        update_option( 'wp_invoice_settings', $current_settings );
-        return $current_settings;
+        // 2. Update global settings (administrators only)
+        if ( current_user_can( 'manage_options' ) ) {
+            $global_fields = array( 'enable_registration', 'registration_role' );
+            $global_settings = get_option( 'wp_invoice_settings', array() );
+            foreach ( $global_fields as $field ) {
+                if ( isset( $settings[ $field ] ) ) {
+                    if ( $field === 'enable_registration' ) {
+                        $global_settings[ $field ] = (int) $settings[ $field ];
+                    } else {
+                        $global_settings[ $field ] = sanitize_text_field( $settings[ $field ] );
+                    }
+                }
+            }
+            update_option( 'wp_invoice_settings', $global_settings );
+        }
+
+        return \Wpim\Invoice\Admin\SettingsPage::get_settings( $user_id );
     }
 
     public function check_permission() {
@@ -322,6 +354,29 @@ class REST_API {
         wp_delete_post( $post_id, true );
 
         return rest_ensure_response( array( 'deleted' => true ) );
+    }
+
+    public function bulk_delete_invoices( $request ) {
+        $data = $request->get_json_params();
+        $ids  = isset( $data['ids'] ) ? array_map( 'intval', $data['ids'] ) : array();
+
+        if ( empty( $ids ) ) {
+            return new \WP_Error( 'missing_ids', 'No invoice IDs provided', array( 'status' => 400 ) );
+        }
+
+        $deleted_count = 0;
+        foreach ( $ids as $id ) {
+            $post = get_post( $id );
+            if ( $post && $post->post_type === 'wp_invoice' && current_user_can( 'delete_post', $id ) ) {
+                wp_delete_post( $id, true );
+                $deleted_count++;
+            }
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'deleted' => $deleted_count,
+        ) );
     }
 
     public function update_status( $request ) {
