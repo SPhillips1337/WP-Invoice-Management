@@ -18,28 +18,53 @@ A demo is available at https://invoices.happymonkey.ai/ (Expect bugs though as s
 - **dompdf**: High-quality PDF generation.
 - **Vanilla JS**: Interactive frontend editor.
 
-## 📦 Installation (Development)
+## 📦 Installation
 
-This project includes a Docker Compose setup for easy local development.
+### Installer script
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/SPhillips1337/wp-invoice-management.git
-    cd wp-invoice-management
-    ```
+A hardened installer is available for fresh checkouts or existing local copies. It validates an existing directory before modifying it, installs Composer dependencies, and supports production or development dependency sets.
 
-2.  **Start the environment**:
-    ```bash
-    docker-compose up -d
-    ```
+Inspect the script before running it:
 
-3.  **Install dependencies**:
-    ```bash
-    docker run --rm --interactive --tty --volume "$(pwd)/wp-invoice-management:/app" composer install
-    ```
+```bash
+curl -fsSL https://raw.githubusercontent.com/SPhillips1337/WP-Invoice-Management/main/install.sh -o install.sh
+less install.sh
+bash install.sh --dir ./WP-Invoice-Management
+```
 
-4.  **Activate Plugin**:
-    Log in to the WordPress admin panel at `http://localhost:9992` and activate the **WP Invoice Management** plugin.
+For a trusted shell, you can run the downloaded script directly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/SPhillips1337/WP-Invoice-Management/main/install.sh | bash -s -- --dir ./WP-Invoice-Management
+```
+
+Installer options:
+
+```bash
+./install.sh --help
+./install.sh --dir ~/src/WP-Invoice-Management --dev      # include PHPUnit/WP_Mock dev packages
+./install.sh --dir ./WP-Invoice-Management --no-composer # clone/validate only
+```
+
+After installation, copy or symlink `WP-Invoice-Management/wp-invoice-management` into your WordPress `wp-content/plugins/` directory and activate **WP Invoice Management** in the WordPress admin panel.
+
+### Manual development setup
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/SPhillips1337/WP-Invoice-Management.git
+   cd WP-Invoice-Management
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   composer install --working-dir=wp-invoice-management
+   # or, if Composer is not installed locally:
+   docker run --rm --interactive --tty --volume "$(pwd)/wp-invoice-management:/app" composer:2 install
+   ```
+
+3. **Activate Plugin**:
+   Copy or symlink `wp-invoice-management` into `wp-content/plugins/`, then activate the **WP Invoice Management** plugin from your WordPress admin panel.
 
 ## 📜 License
 
